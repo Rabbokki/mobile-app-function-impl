@@ -10,7 +10,7 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // 상단 로고 및 아이콘 메뉴
+            // 상단 로고 및 알림 아이콘
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
               child: Row(
@@ -29,38 +29,75 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // 주요 기능 메뉴 (항공권/호텔/렌터카 등)
+            // 주요 기능 메뉴 아이콘들 - 2줄로 나누기
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12),
+              child: Column(
                 children: [
-                  _MainIconButton(icon: Icons.flight, label: '항공권'),
-                  _MainIconButton(icon: Icons.hotel, label: '호텔'),
-                  _MainIconButton(icon: Icons.directions_car, label: '렌터카'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _MainIconButton(
+                        icon: Icons.flight_takeoff,
+                        label: '항공권',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/flight');
+                        },
+                      ),
+                      _MainIconButton(
+                        icon: Icons.create_rounded,
+                        label: '여행만들기',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/make_trip');
+                        },
+                      ),
+                      _MainIconButton(
+                        icon: Icons.place,
+                        label: '추천 명소',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/recommended');
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _MainIconButton(
+                        icon: Icons.forum,
+                        label: '커뮤니티',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/community');
+                        },
+                      ),
+                      _MainIconButton(
+                        icon: Icons.person,
+                        label: '마이페이지',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/mypage');
+                        },
+                      ),
+                      _MainIconButton(
+                        icon: Icons.login,
+                        label: '로그인',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/login');
+                        },
+                      ),
+                      _MainIconButton(
+                        icon: Icons.person_add,
+                        label: '회원가입',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/signup');
+                        },
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
 
-            // 카드 섹션
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
-              child: SizedBox(
-                height: 100,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: const [
-                    _FeatureCard(title: '어디든지 검색', icon: Icons.explore),
-                    SizedBox(width: 12),
-                    _FeatureCard(title: '호텔 초특가', icon: Icons.local_offer),
-                    SizedBox(width: 12),
-                    _FeatureCard(title: '12가지 여행법', icon: Icons.tips_and_updates),
-                  ],
-                ),
-              ),
-            ),
-
-            // 하단 네비게이션 메뉴 자리 확보용 Spacer
             const Spacer(),
 
             // 하단 네비게이션
@@ -72,9 +109,9 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
-                  _BottomNavItem(icon: Icons.home, label: '둘러보기'),
-                  _BottomNavItem(icon: Icons.calendar_today, label: '여행 일정'),
-                  _BottomNavItem(icon: Icons.person_outline, label: '프로필'),
+                  _BottomNavItem(icon: Icons.home, label: '홈'),
+                  _BottomNavItem(icon: Icons.calendar_today, label: '일정'),
+                  _BottomNavItem(icon: Icons.person_outline, label: '내정보'),
                 ],
               ),
             ),
@@ -88,54 +125,24 @@ class HomeScreen extends StatelessWidget {
 class _MainIconButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const _MainIconButton({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: Colors.blue.shade50,
-          radius: 24,
-          child: Icon(icon, color: Colors.blue),
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-}
-
-class _FeatureCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _FeatureCard({required this.title, required this.icon});
+  const _MainIconButton({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 140,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return GestureDetector(
+      onTap: onTap,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.blue),
-          const SizedBox(height: 12),
-          Text(title, style: const TextStyle(fontSize: 14)),
+          CircleAvatar(
+            backgroundColor: Colors.blue.shade50,
+            radius: 28,
+            child: Icon(icon, color: Colors.blue),
+          ),
+          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
