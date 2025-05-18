@@ -1,37 +1,40 @@
 import 'package:flutter/material.dart';
 
-class SearchScreen extends StatelessWidget {
+class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, String>> dummyFlights = [
-      {
-        'airline': '대한항공',
-        'flightNumber': 'KE123',
-        'departure': '인천(ICN)',
-        'arrival': '도쿄(NRT)',
-        'time': '10:30 → 13:15',
-        'price': '₩350,000'
-      },
-      {
-        'airline': '아시아나항공',
-        'flightNumber': 'OZ456',
-        'departure': '인천(ICN)',
-        'arrival': '오사카(KIX)',
-        'time': '09:10 → 11:45',
-        'price': '₩290,000'
-      },
-      {
-        'airline': '제주항공',
-        'flightNumber': '7C789',
-        'departure': '김포(GMP)',
-        'arrival': '후쿠오카(FUK)',
-        'time': '08:00 → 09:30',
-        'price': '₩180,000'
-      },
-    ];
+  State<SearchScreen> createState() => _SearchScreenState();
+}
 
+class _SearchScreenState extends State<SearchScreen> {
+  String tripType = '왕복';
+  String selectedDeparture = '';
+  String selectedArrival = '';
+  DateTime? departureDate;
+  DateTime? returnDate;
+  int passengers = 1;
+
+  Future<void> _selectDate(BuildContext context, bool isDeparture) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isDeparture) {
+          departureDate = picked;
+        } else {
+          returnDate = picked;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('항공권 검색'),
@@ -39,36 +42,123 @@ class SearchScreen extends StatelessWidget {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
-      body: ListView.builder(
-        itemCount: dummyFlights.length,
-        padding: const EdgeInsets.all(16),
-        itemBuilder: (context, index) {
-          final flight = dummyFlights[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${flight['airline']} (${flight['flightNumber']})',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 왕복 / 편도 / 다구간
+            Row(
+              children: ['왕복', '편도', '다구간'].map((type) {
+                return Row(
+                  children: [
+                    Radio(
+                      value: type,
+                      groupValue: tripType,
+                      onChanged: (value) {
+                        setState(() {
+                          tripType = value!;
+                        });
+                      },
+                    ),
+                    Text(type),
+                  ],
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+
+            // 출발지
+            TextField(
+              decoration: const InputDecoration(
+                labelText: '출발지',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) => selectedDeparture = value,
+            ),
+            const SizedBox(height: 12),
+
+            // 도착지
+            TextField(
+              decoration: const InputDecoration(
+                labelText: '도착지',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) => selectedArrival = value,
+            ),
+            const SizedBox(height: 20),
+
+            // 출발일 / 귀국일
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _selectDate(context, true),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: '출발일',
+                        border: OutlineInputBorder(),
+                      ),
+                      child: Text(
+                        departureDate == null
+                            ? '날짜 선택'
+                            : '${departureDate!.year}-${departureDate!.month}-${departureDate!.day}',
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text('출발: ${flight['departure']}'),
-                  Text('도착: ${flight['arrival']}'),
-                  Text('시간: ${flight['time']}'),
-                  const SizedBox(height: 8),
-                  Text(
-                    '가격: ${flight['price']}',
-                    style: const TextStyle(color: Colors.blue),
+                ),
+                const SizedBox(width: 12),
+                if (tripType == '왕복')
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _selectDate(context, false),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: '귀국일',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: Text(
+                          returnDate == null
+                              ? '날짜 선택'
+                              : '${returnDate!.year}-${returnDate!.month}-${returnDate!.day}',
+                        ),
+                      ),
+                    ),
                   ),
-                ],
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // 탑승객 수
+            TextField(
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '탑승객 수',
+                prefixIcon: Icon(Icons.person),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                passengers = int.tryParse(value) ?? 1;
+              },
+            ),
+            const SizedBox(height: 30),
+
+            // 검색 버튼
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // 검색 기능 연결 예정
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('검색', style: TextStyle(fontSize: 16)),
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
