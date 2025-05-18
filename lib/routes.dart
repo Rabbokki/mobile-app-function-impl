@@ -12,6 +12,7 @@ import 'screens/travel_planner/ai_itinerary_screen.dart';
 import 'screens/travel_planner/step1_date_selection.dart';
 import 'screens/travel_planner/step2_attraction_selection.dart';
 import 'screens/travel_planner/step3_accommodation_selection.dart';
+import 'screens/travel_planner/step4_transportation_selection.dart';
 import 'screens/travel_planner/step5_itinerary_generation.dart';
 
 final Map<String, WidgetBuilder> appRoutes = {
@@ -28,6 +29,7 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/step1': (context) => const Step1DateSelection(),
   '/step2': (context) => const Step2AttractionSelection(),
   '/step3': (context) => const Step3AccommodationSelection(),
+  '/step4': (context) => const Step4TransportationSelection(),
   '/step5': (context) => const Step5ItineraryGeneration(),
 
 };
