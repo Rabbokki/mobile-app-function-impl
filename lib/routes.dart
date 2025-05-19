@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
-import 'screens/flight_search/search_screen.dart';
-import 'screens/travel_planner/make_trip_screen.dart';
-import 'screens/recommended_places/recommended_places_screen.dart';
-import 'screens/community/community_home.dart';
-import 'screens/mypage/mypage_screen.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/auth/signup_screen.dart';
-import 'screens/travel_planner/manual_itinerary_screen.dart';
-import 'screens/travel_planner/ai_itinerary_screen.dart';
-import 'screens/travel_planner/step1_date_selection.dart';
-import 'screens/travel_planner/step2_attraction_selection.dart';
-import 'screens/travel_planner/step3_accommodation_selection.dart';
-import 'screens/travel_planner/step4_transportation_selection.dart';
-import 'screens/travel_planner/step5_itinerary_generation.dart';
+import 'package:mobile_app_function_impl/screens/home_screen.dart';
+import 'package:mobile_app_function_impl/screens/flight_search/search_screen.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/make_trip_screen.dart';
+import 'package:mobile_app_function_impl/screens/recommended_places/recommended_places_screen.dart';
+import 'package:mobile_app_function_impl/screens/community/community_home.dart';
+import 'package:mobile_app_function_impl/screens/mypage/mypage_screen.dart';
+import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
+import 'package:mobile_app_function_impl/screens/auth/login_screen.dart';
+import 'package:mobile_app_function_impl/screens/auth/signup_screen.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/manual_itinerary_screen.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/ai_itinerary_screen.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/step1_date_selection.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/step2_attraction_selection.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/step3_accommodation_selection.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/step4_transportation_selection.dart';
+import 'package:mobile_app_function_impl/screens/travel_planner/step5_itinerary_generation.dart';
 
 final Map<String, WidgetBuilder> appRoutes = {
   '/': (context) => const HomeScreen(),
@@ -31,5 +32,4 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/step3': (context) => const Step3AccommodationSelection(),
   '/step4': (context) => const Step4TransportationSelection(),
   '/step5': (context) => const Step5ItineraryGeneration(),
-
 };
