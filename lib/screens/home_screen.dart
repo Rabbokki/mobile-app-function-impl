@@ -3,115 +3,131 @@ import 'package:flutter/material.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static const Color travelingPurple = Color(0xFFA78BFA);
+  static const Color lightPurple = Color(0xFFEDE9FE);
+  static const Color backgroundColor = Color(0xFFF9FAFB);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // 상단 로고 및 알림 아이콘
+            // 상단: 로고 + 로그인/회원가입
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     'Traveling',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+                      color: travelingPurple,
                     ),
                   ),
-                  Icon(Icons.notifications_none, color: Colors.grey),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () {},
+                        child: const Text('로그인', style: TextStyle(color: Colors.black87)),
+                      ),
+                      TextButton(
+                        onPressed: () {},
+                        child: const Text('회원가입', style: TextStyle(color: Colors.black45)),
+                      ),
+                    ],
+                  )
                 ],
               ),
             ),
 
-            // 주요 기능 메뉴 아이콘들 - 2줄로 나누기
+            const Padding(
+              padding: EdgeInsets.only(left: 24.0, bottom: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '✈️ 세상 모든 여행을 한눈에!',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+
+            // 기능 버튼들
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _MainIconButton(
-                        icon: Icons.flight_takeoff,
-                        label: '항공권',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/flight');
-                        },
-                      ),
-                      _MainIconButton(
-                        icon: Icons.create_rounded,
-                        label: '여행만들기',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/make_trip');
-                        },
-                      ),
-                      _MainIconButton(
-                        icon: Icons.place,
-                        label: '추천 명소',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/recommended');
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _MainIconButton(
-                        icon: Icons.forum,
-                        label: '커뮤니티',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/community');
-                        },
-                      ),
-                      _MainIconButton(
-                        icon: Icons.person,
-                        label: '마이페이지',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/mypage');
-                        },
-                      ),
-                      _MainIconButton(
-                        icon: Icons.login,
-                        label: '로그인',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/login');
-                        },
-                      ),
-                      _MainIconButton(
-                        icon: Icons.person_add,
-                        label: '회원가입',
-                        onTap: () {
-                          Navigator.pushNamed(context, '/signup');
-                        },
-                      ),
-                    ],
-                  ),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: const [
+                  _MainFeatureButton(icon: Icons.flight, label: '항공권'),
+                  _MainFeatureButton(icon: Icons.edit, label: '여행만들기'),
+                  _MainFeatureButton(icon: Icons.place, label: '추천 명소'),
+                  _MainFeatureButton(icon: Icons.chat_bubble_outline, label: '커뮤니티'),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // 인기 여행지 추천 카드
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('🧳 인기 여행지 추천',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Text('도쿄 · 파리 · 방콕',
+                        style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: lightPurple,
+                        foregroundColor: travelingPurple,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('추천 명소 보기'),
+                    )
+                  ],
+                ),
               ),
             ),
 
             const Spacer(),
 
-            // 하단 네비게이션
+            // 하단 네비게이션 바
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey.shade300)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: Color(0xFFE0E0E0))),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
-                  _BottomNavItem(icon: Icons.home, label: '홈'),
-                  _BottomNavItem(icon: Icons.calendar_today, label: '일정'),
-                  _BottomNavItem(icon: Icons.person_outline, label: '내정보'),
+                  _BottomNavItem(icon: Icons.home, label: '홈', isActive: true),
+                  _BottomNavItem(icon: Icons.person, label: '마이페이지'),
                 ],
               ),
             ),
@@ -122,47 +138,85 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _MainIconButton extends StatelessWidget {
+// --- 기능 버튼 위젯
+class _MainFeatureButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback? onTap;
 
-  const _MainIconButton({required this.icon, required this.label, this.onTap});
+  const _MainFeatureButton({required this.icon, required this.label});
+
+  static const Color travelingPurple = Color(0xFFA78BFA);
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleAvatar(
-            backgroundColor: Colors.blue.shade50,
-            radius: 28,
-            child: Icon(icon, color: Colors.blue),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xFFE9D5FF), Color(0xFFA78BFA)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Icon(icon, color: Colors.white),
           ),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
+          const SizedBox(height: 8),
+          Text(label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 }
 
+// --- 하단 네비게이션 바 아이템
 class _BottomNavItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool isActive;
 
-  const _BottomNavItem({required this.icon, required this.label});
+  static const Color travelingPurple = Color(0xFFA78BFA);
+
+  const _BottomNavItem({
+    required this.icon,
+    required this.label,
+    this.isActive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.blue),
+        Icon(icon, color: isActive ? travelingPurple : Colors.grey),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: isActive ? travelingPurple : Colors.grey,
+          ),
+        )
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:mobile_app_function_impl/screens/flight_search/search_screen.dar
 import 'package:mobile_app_function_impl/screens/travel_planner/make_trip_screen.dart';
 import 'package:mobile_app_function_impl/screens/recommended_places/recommended_places_screen.dart';
 import 'package:mobile_app_function_impl/screens/community/community_home.dart';
+import 'package:mobile_app_function_impl/screens/community/write_post.dart';
 import 'package:mobile_app_function_impl/screens/mypage/mypage_screen.dart';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
 import 'package:mobile_app_function_impl/screens/auth/login_screen.dart';
@@ -22,6 +23,7 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/make_trip': (context) => const MakeTripScreen(),
   '/recommended': (context) => const RecommendedPlacesScreen(),
   '/community': (context) => const CommunityHomeScreen(),
+  '/write_post': (context) => const WritePostScreen(),
   '/mypage': (context) => const MyPageScreen(),
   '/login': (context) => const LoginScreen(),
   '/signup': (context) => const SignupScreen(),

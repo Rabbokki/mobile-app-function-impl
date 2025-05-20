@@ -1,3 +1,4 @@
+// 상단 import 유지
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -14,12 +15,12 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController nicknameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
-  final TextEditingController introController = TextEditingController();
+  final emailController = TextEditingController();
+  final nameController = TextEditingController();
+  final nicknameController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+  final introController = TextEditingController();
 
   DateTime? birthday;
   String? gender;
@@ -27,6 +28,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool agreeTerms = false;
   bool agreeMarketing = false;
+
+  static const Color travelingPurple = Color(0xFFA78BFA);
+  static const Color backgroundColor = Color(0xFFF9FAFB);
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -81,11 +85,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
       final dio = Dio();
       final response = await dio.post(
-        'http://10.0.2.2:8080/api/account/signu', // ⚠️ 실제 서버 주소로 변경
+        'http://10.0.2.2:8080/api/account/signup', // 주소 확인
         data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-        ),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -109,13 +111,14 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('회원가입'),
-        backgroundColor: Colors.purple,
+        backgroundColor: travelingPurple,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
@@ -124,9 +127,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 onTap: _pickImage,
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundImage: _profileImage != null
-                      ? FileImage(_profileImage!)
-                      : null,
+                  backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
                   child: _profileImage == null
                       ? const Icon(Icons.camera_alt, size: 40, color: Colors.white)
                       : null,
@@ -134,7 +135,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('프로필 사진 등록', style: TextStyle(fontSize: 14)),
+              Text('프로필 사진 등록', style: TextStyle(fontSize: 14, color: travelingPurple)),
               const SizedBox(height: 20),
 
               _buildTextField(emailController, '이메일', keyboardType: TextInputType.emailAddress),
@@ -150,29 +151,40 @@ class _SignupScreenState extends State<SignupScreen> {
               CheckboxListTile(
                 title: const Text('이용약관 및 개인정보 처리방침에 동의합니다. (필수)'),
                 value: agreeTerms,
+                activeColor: travelingPurple,
                 onChanged: (val) => setState(() => agreeTerms = val ?? false),
               ),
               CheckboxListTile(
                 title: const Text('여행 정보 수신에 동의합니다. (선택)'),
                 value: agreeMarketing,
+                activeColor: travelingPurple,
                 onChanged: (val) => setState(() => agreeMarketing = val ?? false),
               ),
-              const SizedBox(height: 16),
 
-              ElevatedButton(
-                onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 14),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: travelingPurple,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('회원가입', style: TextStyle(fontSize: 16)),
                 ),
-                child: const Text('회원가입'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/login');
                 },
-                child: const Text('이미 계정이 있으신가요? 로그인'),
+                child: Text(
+                  '이미 계정이 있으신가요? 로그인',
+                  style: TextStyle(color: travelingPurple),
+                ),
               )
             ],
           ),
@@ -208,19 +220,27 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildDateField() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          const Text('생년월일:'),
-          const SizedBox(width: 12),
-          Text(birthday != null
-              ? DateFormat('yyyy-MM-dd').format(birthday!)
-              : '날짜 선택 안됨'),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: _selectBirthday,
-            child: const Text('선택'),
-          )
-        ],
+      child: GestureDetector(
+        onTap: _selectBirthday,
+        child: AbsorbPointer(
+          child: TextFormField(
+            readOnly: true,
+            decoration: InputDecoration(
+              labelText: '생년월일',
+              border: const OutlineInputBorder(),
+              suffixIcon: const Icon(Icons.calendar_today),
+            ),
+            controller: TextEditingController(
+              text: birthday != null
+                  ? DateFormat('yyyy-MM-dd').format(birthday!)
+                  : '',
+            ),
+            validator: (value) {
+              if (birthday == null) return '생년월일을 선택해주세요';
+              return null;
+            },
+          ),
+        ),
       ),
     );
   }

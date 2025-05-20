@@ -1,6 +1,8 @@
+// ✅ 마이페이지 색상 업데이트: 회원가입 테마와 정확히 통일
+
 import 'package:flutter/material.dart';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
-import 'package:mobile_app_function_impl/data/saved_trips.dart'; //
+import 'package:mobile_app_function_impl/data/saved_trips.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -37,6 +39,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     },
   ];
 
+  static const Color travelingPurple = Color(0xFFA78BFA); // 회원가입 기준 색상
+
   @override
   void initState() {
     super.initState();
@@ -53,14 +57,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text('마이페이지', style: TextStyle(color: Colors.black)),
+        backgroundColor: travelingPurple,
+        title: const Text('마이페이지', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: Colors.purple,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
           tabs: const [
             Tab(text: '내 여행'),
             Tab(text: '내 예약'),
@@ -69,6 +73,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           ],
         ),
       ),
+      backgroundColor: const Color(0xFFF9FAFB),
       body: TabBarView(
         controller: _tabController,
         children: [
@@ -90,21 +95,22 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
             padding: const EdgeInsets.all(16.0),
             child: GridView.count(
               crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
               children: [
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/make_trip'),
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add_circle_outline, size: 40, color: Colors.blue),
+                        children: const [
+                          Icon(Icons.add_circle_outline, size: 40, color: travelingPurple),
                           SizedBox(height: 8),
                           Text('새 여행 만들기'),
                           Text('새로운 여행 일정을 계획해보세요', style: TextStyle(fontSize: 12)),
@@ -116,17 +122,17 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 ...savedTrips.map((trip) => Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(10),
                     color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.map, size: 30, color: Colors.blue),
-                      const SizedBox(height: 8),
+                      const Icon(Icons.map, size: 30, color: travelingPurple),
+                      SizedBox(height: 8),
                       Text(trip['city'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text('${trip['startDate']} ~ ${trip['endDate']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       const Spacer(),
                       Align(
@@ -145,7 +151,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                               ),
                             );
                           },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                          style: ElevatedButton.styleFrom(backgroundColor: travelingPurple),
                           child: const Text('일정 보기', style: TextStyle(color: Colors.white)),
                         ),
                       )
@@ -168,13 +174,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         final item = dummyReservations[index];
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 1.5,
           child: ListTile(
             title: Text('${item['from']} → ${item['to']}'),
             subtitle: Text('항공사: ${item['airline']}, 날짜: ${item['date']}'),
-            trailing: TextButton(
-              onPressed: () {},
-              child: const Text('상세보기'),
-            ),
+            trailing: const Text('상세보기', style: TextStyle(color: travelingPurple)),
           ),
         );
       },
@@ -189,13 +193,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         final item = dummySavedItems[index];
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 1.5,
           child: ListTile(
-            title: Text('${item['name']}'),
+            title: Text(item['name'] ?? ''),
             subtitle: Text('${item['location']} · ${item['type']} · 저장일: ${item['savedDate']}'),
-            trailing: TextButton(
-              onPressed: () {},
-              child: const Text('상세보기'),
-            ),
+            trailing: const Text('상세보기', style: TextStyle(color: travelingPurple)),
           ),
         );
       },
@@ -210,6 +212,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         final item = dummyReviews[index];
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
+          elevation: 1.5,
           child: ListTile(
             title: Text(item['place']),
             subtitle: Column(
@@ -221,7 +224,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               ],
             ),
             trailing: SizedBox(
-              height: 60, // 🔧 overflow 방지
+              height: 60,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -229,12 +232,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   Text('⭐ ${item['rating']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                   TextButton(
                     onPressed: () {},
-                    child: const Text('수정', style: TextStyle(fontSize: 12)),
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: const Size(40, 20),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
+                    child: const Text('수정', style: TextStyle(fontSize: 12, color: travelingPurple)),
                   ),
                 ],
               ),
@@ -245,14 +248,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
-
   Widget _buildProfileHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.grey[100],
+      color: travelingPurple.withOpacity(0.1),
       child: Row(
         children: [
-          const CircleAvatar(radius: 30, child: Icon(Icons.person)),
+          const CircleAvatar(radius: 30, child: Icon(Icons.person, size: 30)),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,10 +269,17 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
             children: [
               ElevatedButton(
                 onPressed: () {},
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.pink[100]),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: travelingPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
                 child: const Text('설정'),
               ),
-              TextButton(onPressed: () {}, child: const Text('프로필 수정')),
+              const TextButton(
+                onPressed: null,
+                child: Text('프로필 수정', style: TextStyle(color: travelingPurple)),
+              ),
             ],
           )
         ],
