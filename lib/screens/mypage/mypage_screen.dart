@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
-import 'package:mobile_app_function_impl/data/saved_trips.dart'; //
+import 'package:mobile_app_function_impl/data/saved_trips.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -11,6 +14,8 @@ class MyPageScreen extends StatefulWidget {
 
 class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Map<String, dynamic>? myInfo;
+  bool isLoading = true;
 
   final List<Map<String, String>> dummyReservations = [
     {'from': 'ICN', 'to': 'NRT', 'date': '2025-06-01', 'airline': '대한항공'},
@@ -41,7 +46,93 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _fetchMyInfo();
   }
+
+  Future<void> _fetchMyInfo() async {
+    final url = Uri.parse('http://10.0.2.2:8080/api/accounts/mypage');
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    final refreshToken = prefs.getString('refreshToken');
+
+    if (accessToken == null) {
+      // No token found — maybe redirect to login
+      debugPrint('No access token found, redirecting to login.');
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    print('Access token: $accessToken');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access_Token': accessToken,
+          'Refresh': refreshToken ?? '',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          myInfo = data;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        debugPrint('Failed to load profile: ${response.statusCode}');
+        if (response.statusCode == 401) {
+          // Token expired or invalid, logout user
+          await prefs.clear();
+          if (!mounted) return;
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      debugPrint('Error fetching profile: $e');
+    }
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+
+    if (accessToken == null) {
+      debugPrint('No access token found');
+      return;
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/api/accounts/logout');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Access_Token': accessToken,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('Logout successful');
+        await prefs.clear(); // Clear tokens
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/login'); // Redirect to login
+      } else {
+        debugPrint('Logout failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error during logout: $e');
+    }
+  }
+
 
   @override
   void dispose() {
@@ -56,6 +147,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         backgroundColor: Colors.white,
         title: const Text('마이페이지', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black),
+            onPressed: _logout,
+            tooltip: '로그아웃',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.black,
@@ -69,7 +167,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           ],
         ),
       ),
-      body: TabBarView(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
         controller: _tabController,
         children: [
           _buildMyTripsTab(),
@@ -221,7 +321,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
               ],
             ),
             trailing: SizedBox(
-              height: 60, // 🔧 overflow 방지
+              height: 60,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -245,8 +345,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
-
   Widget _buildProfileHeader() {
+    final nickname = myInfo?['nickname'] ?? '사용자';
+    final email = myInfo?['email'] ?? '이메일 정보 없음';
+    final level = myInfo?['level'] ?? 'Lv.1';
+    final percent = myInfo?['expPercent'] ?? 0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.grey[100],
@@ -256,10 +360,10 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text('naver', style: TextStyle(fontWeight: FontWeight.bold)),
-              Text('naver@naver.com'),
-              Text('여행 레벨: 여행 새싹 Lv.1 (0%)', style: TextStyle(fontSize: 12)),
+            children: [
+              Text(nickname, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(email),
+              Text('여행 레벨: $level ($percent%)', style: const TextStyle(fontSize: 12)),
             ],
           ),
           const Spacer(),

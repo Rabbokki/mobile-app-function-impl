@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -62,7 +64,8 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     try {
-      final formData = FormData.fromMap({
+      // Create a Map matching AccountRegisterRequestDto fields (adjust keys exactly!)
+      final Map<String, dynamic> requestData = {
         'email': emailController.text,
         'name': nameController.text,
         'nickname': nicknameController.text,
@@ -70,22 +73,29 @@ class _SignupScreenState extends State<SignupScreen> {
         'birthday': birthday?.toIso8601String(),
         'gender': gender,
         'intro': introController.text,
-        'agreeTerms': agreeTerms.toString(),
-        'agreeMarketing': agreeMarketing.toString(),
+        'agreeTerms': agreeTerms,
+        'agreeMarketing': agreeMarketing,
+      };
+
+      final formData = FormData.fromMap({
+        'request': MultipartFile.fromString(
+          jsonEncode(requestData),
+          contentType: MediaType('application', 'json'),
+        ),
+
         if (_profileImage != null)
           'profileImage': await MultipartFile.fromFile(
             _profileImage!.path,
             filename: 'profile.jpg',
+            contentType: MediaType('image', 'jpeg'), // Import 'package:http_parser/http_parser.dart';
           ),
       });
 
       final dio = Dio();
       final response = await dio.post(
-        'http://10.0.2.2:8080/api/account/signu', // ⚠️ 실제 서버 주소로 변경
+        'http://10.0.2.2:8080/api/accounts/register', // exact backend URL
         data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-        ),
+        options: Options(),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -235,9 +245,9 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         value: gender,
         items: const [
-          DropdownMenuItem(value: 'MALE', child: Text('남성')),
-          DropdownMenuItem(value: 'FEMALE', child: Text('여성')),
-          DropdownMenuItem(value: 'OTHER', child: Text('기타')),
+          DropdownMenuItem(value: '남성', child: Text('남성')),
+          DropdownMenuItem(value: '여성', child: Text('여성')),
+          DropdownMenuItem(value: '기타', child: Text('기타')),
         ],
         onChanged: (val) => setState(() => gender = val),
         validator: (val) => val == null ? '성별을 선택해주세요' : null,

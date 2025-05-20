@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,18 +25,65 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => isLoading = true);
 
+    final email = emailController.text;
+    final password = passwordController.text;
+
     try {
-      final email = emailController.text;
-      final password = passwordController.text;
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/api/accounts/login'), // Use 10.0.2.2 instead of localhost for Android Emulator
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': email,
+            'password': password,
+          }),
+        );
 
-      print('로그인 요청: $email / $password');
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final accessToken = data['accessToken'];
+          final refreshToken = data['refreshToken'];
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인 성공!')),
-      );
-      // Navigator.pushReplacementNamed(context, '/mypage');
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('accessToken', accessToken);
+          await prefs.setString('refreshToken', refreshToken);
+
+          print('✅ Login successful: $accessToken');
+
+          final userInfoResponse = await http.get(
+            Uri.parse('http://10.0.2.2:8080/api/accounts/me'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Access_Token': accessToken,
+              'Refresh': refreshToken,
+            },
+          );
+
+          if (userInfoResponse.statusCode == 200) {
+            final userInfo = json.decode(userInfoResponse.body);
+            await prefs.setString('userInfo', jsonEncode(userInfo));
+
+
+            print('👤 User info saved: ${userInfo['nickname']}');
+          } else {
+            print('⚠️ Failed to fetch user info: ${userInfoResponse.statusCode}');
+          }
+
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('로그인 성공!')),
+          );
+
+          await Future.delayed(Duration(seconds: 1));
+          Navigator.pushReplacementNamed(context, '/mypage');
+        } else {
+          print('❌ Failed with status: ${response.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('로그인 실패: 잘못된 이메일 또는 비밀번호')),
+          );
+        }
 
     } catch (e) {
+      print('❌ Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('로그인 실패: $e')),
       );

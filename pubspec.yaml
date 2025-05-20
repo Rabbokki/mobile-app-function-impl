@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^0.13.6
+  http_parser: ^4.0.0
+  shared_preferences: ^2.2.2
   cupertino_icons: ^1.0.8
   url_launcher: ^6.2.5
   intl: ^0.18.1
