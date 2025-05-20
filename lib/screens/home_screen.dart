@@ -194,29 +194,34 @@ class _BottomNavItem extends StatelessWidget {
   final String label;
   final bool isActive;
 
-  static const Color travelingPurple = Color(0xFFA78BFA);
-
   const _BottomNavItem({
     required this.icon,
     required this.label,
     this.isActive = false,
+    super.key,
   });
+
+  static const Color travelingPurple = Color(0xFFA78BFA);
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: isActive ? travelingPurple : Colors.grey),
-        const SizedBox(height: 4),
+        Icon(
+          icon,
+          size: 28, // ✔️ 크기 증가
+          color: isActive ? travelingPurple : Colors.grey.shade400,
+        ),
+        const SizedBox(height: 6), // ✔️ 여백 증가
         Text(
           label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 13, // ✔️ 폰트 키움
             fontWeight: FontWeight.w500,
-            color: isActive ? travelingPurple : Colors.grey,
+            color: isActive ? travelingPurple : Colors.grey.shade400,
           ),
-        )
+        ),
       ],
     );
   }
