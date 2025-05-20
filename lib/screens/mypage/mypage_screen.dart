@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
+import 'package:mobile_app_function_impl/data/saved_trips.dart'; //
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -10,11 +11,6 @@ class MyPageScreen extends StatefulWidget {
 
 class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  final List<Map<String, String>> dummyTrips = [
-    {'city': '도쿄', 'startDate': '2025-06-01', 'endDate': '2025-06-04'},
-    {'city': '파리', 'startDate': '2025-07-10', 'endDate': '2025-07-15'},
-  ];
 
   final List<Map<String, String>> dummyReservations = [
     {'from': 'ICN', 'to': 'NRT', 'date': '2025-06-01', 'airline': '대한항공'},
@@ -117,7 +113,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                     ),
                   ),
                 ),
-                ...dummyTrips.map((trip) => Container(
+                ...savedTrips.map((trip) => Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
@@ -141,9 +137,10 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                               context,
                               MaterialPageRoute(
                                 builder: (context) => TripDetailScreen(
-                                  city: trip['city']!,
-                                  startDate: trip['startDate']!,
-                                  endDate: trip['endDate']!,
+                                  city: trip['city'],
+                                  startDate: trip['startDate'],
+                                  endDate: trip['endDate'],
+                                  itinerary: trip['itinerary'],
                                 ),
                               ),
                             );
@@ -223,22 +220,24 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 Text(item['content']),
               ],
             ),
-            trailing: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('⭐ ${item['rating']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                    minimumSize: Size(0, 24),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            trailing: SizedBox(
+              height: 60, // 🔧 overflow 방지
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('⭐ ${item['rating']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text('수정', style: TextStyle(fontSize: 12)),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(40, 20),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
-                  child: const Text('수정', style: TextStyle(fontSize: 12)),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

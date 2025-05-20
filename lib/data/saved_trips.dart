@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
 
+List<Map<String, dynamic>> savedTrips = [];
+
+
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
 

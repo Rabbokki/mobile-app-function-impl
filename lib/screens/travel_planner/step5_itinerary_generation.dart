@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_function_impl/data/saved_trips.dart';
 
 class Step5ItineraryGeneration extends StatelessWidget {
   const Step5ItineraryGeneration({super.key});
@@ -61,9 +62,20 @@ class Step5ItineraryGeneration extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: () {
+                  final newTrip = {
+                    'city': '도쿄',
+                    'startDate': '2025-06-01',
+                    'endDate': '2025-06-04',
+                    'itinerary': itinerary, // 핵심 추가
+                  };
+
+                  savedTrips.add(newTrip);
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('일정이 저장되었습니다!')),
                   );
+
+                  Navigator.pushNamed(context, '/mypage'); //  저장 후 이동
                 },
                 child: const Text('여행 일정 저장하기'),
               ),
