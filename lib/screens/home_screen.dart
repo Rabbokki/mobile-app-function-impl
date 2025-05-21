@@ -143,45 +143,57 @@ class _MainFeatureButton extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _MainFeatureButton({required this.icon, required this.label});
+  const _MainFeatureButton({
+    required this.icon,
+    required this.label,
+    super.key,
+  });
 
-  static const Color travelingPurple = Color(0xFFA78BFA);
+  static const Color jellyPurple = Color(0xFFD8B4FE); // 연보라 배경
+  static const Color iconPurple = Color(0xFFA78BFA);  // 메인 보라
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 120,
+      width: 100,
       height: 120,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // 젤리 스타일 원형 버튼
           Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 colors: [Color(0xFFE9D5FF), Color(0xFFA78BFA)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33212121),
+                  offset: Offset(0, 4),
+                  blurRadius: 8,
+                ),
+              ],
             ),
-            child: Icon(icon, color: Colors.white),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
-          const SizedBox(height: 8),
-          Text(label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
         ],
       ),
     );
