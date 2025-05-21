@@ -76,7 +76,10 @@ class _SearchScreenState extends State<SearchScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ResultScreen(flightResults: results),
+          builder: (_) => ResultScreen(
+            flightResults: results,
+            initialPassengerCount: passengers,  // 이 부분을 탑승객 수 변수로 전달
+          ),
         ),
       );
     } catch (e) {

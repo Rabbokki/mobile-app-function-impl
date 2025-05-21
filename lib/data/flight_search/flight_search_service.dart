@@ -41,16 +41,16 @@ class FlightSearchService {
   Future<void> saveFlight({
     required FlightInfo flight,
     required int travelPlanId,
+    required String accessToken,
   }) async {
     try {
       final data = {
-        'origin': flight.departureAirport, // 예: ICN
-        'destination': flight.arrivalAirport, // 예: NRT
-        'departureDate': flight.departureTime.substring(0, 10), // "YYYY-MM-DD"
+        'origin': flight.departureAirport,
+        'destination': flight.arrivalAirport,
+        'departureDate': flight.departureTime.substring(0, 10),
         'returnDate': flight.returnDepartureTime?.substring(0, 10) ?? '',
         'realTime': true,
       };
-
 
       final response = await _dio.post(
         '/api/flights/save',
@@ -58,6 +58,11 @@ class FlightSearchService {
           'travelPlanId': travelPlanId,
         },
         data: data,
+        options: Options(
+          headers: {
+            'Access_Token': accessToken,
+          },
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -69,4 +74,48 @@ class FlightSearchService {
       throw Exception('❌ 저장 중 오류 발생: $e');
     }
   }
+
+
+  Future<void> bookFlight({
+    required FlightInfo flight,
+    required int passengerCount,
+    required String accessToken,
+  }) async {
+    final body = {
+      "flightId": flight.id,
+      "carrier": flight.carrier,
+      "carrierCode": flight.carrierCode,
+      "flightNumber": flight.flightNumber,
+      "departureAirport": flight.departureAirport,
+      "arrivalAirport": flight.arrivalAirport,
+      "departureTime": flight.departureTime,
+      "arrivalTime": flight.arrivalTime,
+      "returnDepartureAirport": flight.returnDepartureAirport,
+      "returnArrivalAirport": flight.returnArrivalAirport,
+      "returnDepartureTime": flight.returnDepartureTime,
+      "returnArrivalTime": flight.returnArrivalTime,
+      "passengerCount": passengerCount,
+      "selectedSeats": List.generate(passengerCount, (i) => "A${i + 1}"),
+      "totalPrice": double.parse(flight.price) * passengerCount,
+      "passengers": [],
+      "contact": {"email": "test@example.com", "phone": "010-0000-0000"}
+    };
+
+    final response = await _dio.post(
+      "/api/flights/book",
+      data: body,
+      options: Options(
+        headers: {"Access_Token": accessToken},
+      ),
+    );
+
+    if (response.statusCode == 200 && response.data["success"] == true) {
+      print("✅ 예약 완료!");
+    } else {
+      print("❌ 예약 실패: ${response.data}");
+      throw Exception("예약 실패");
+    }
+  }
+
 }
+

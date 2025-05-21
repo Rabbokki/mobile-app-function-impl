@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:mobile_app_function_impl/screens/home_screen.dart';
 import 'package:mobile_app_function_impl/screens/flight_search/search_screen.dart';
+import 'package:mobile_app_function_impl/screens/flight_search/flight_detail_screen.dart';
+import 'package:mobile_app_function_impl/screens/flight_search/seat_selection_screen.dart';
+import 'package:mobile_app_function_impl/screens/flight_search/passenger_info_screen.dart';
+import 'package:mobile_app_function_impl/screens/flight_search/payment_screen.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/make_trip_screen.dart';
 import 'package:mobile_app_function_impl/screens/recommended_places/recommended_places_screen.dart';
 import 'package:mobile_app_function_impl/screens/community/community_home.dart';
@@ -27,6 +31,21 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       break;
     case '/flight':
       builder = (BuildContext _) => const SearchScreen();
+      break;
+    case '/flight_detail':
+      builder = (BuildContext context) => const FlightDetailScreen();
+      break;
+    case '/seat-selection':
+      final flight = settings.arguments as Map<String, dynamic>;
+      builder = (BuildContext context) => SeatSelectionScreen(flight: flight);
+      break;
+
+    case '/passenger_info':
+      builder = (BuildContext context) => const PassengerInfoScreen();
+      break;
+    case '/payment':
+      final flightWithPassenger = settings.arguments as Map<String, dynamic>;
+      builder = (BuildContext context) => PaymentScreen(flightWithPassenger: flightWithPassenger);
       break;
     case '/make_trip':
       builder = (BuildContext _) => const MakeTripScreen();
