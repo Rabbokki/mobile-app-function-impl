@@ -4,83 +4,70 @@ class MakeTripScreen extends StatelessWidget {
   const MakeTripScreen({super.key});
 
   final List<Map<String, String>> destinations = const [
-    {
-      'city': 'OSAKA',
-      'country': '일본 오사카',
-      'route': '/step1',
-    },
-    {
-      'city': 'TOKYO',
-      'country': '일본 도쿄',
-      'route': '/step1',
-    },
-    {
-      'city': 'FUKUOKA',
-      'country': '일본 후쿠오카',
-      'route': '/step1',
-    },
-    {
-      'city': 'PARIS',
-      'country': '프랑스 파리',
-      'route': '/step1',
-    },
-    {
-      'city': 'ROME',
-      'country': '이탈리아 로마',
-      'route': '/step1',
-    },
-    {
-      'city': 'VENICE',
-      'country': '이탈리아 베니스',
-      'route': '/step1',
-    },
-    {
-      'city': 'BANGKOK',
-      'country': '태국 방콕',
-      'route': '/step1',
-    },
-    {
-      'city': 'SINGAPORE',
-      'country': '싱가포르',
-      'route': '/step1',
-    },
+    {'city': 'OSAKA', 'country': '일본 오사카', 'route': '/step1'},
+    {'city': 'TOKYO', 'country': '일본 도쿄', 'route': '/step1'},
+    {'city': 'FUKUOKA', 'country': '일본 후쿠오카', 'route': '/step1'},
+    {'city': 'PARIS', 'country': '프랑스 파리', 'route': '/step1'},
+    {'city': 'ROME', 'country': '이탈리아 로마', 'route': '/step1'},
+    {'city': 'VENICE', 'country': '이탈리아 베니스', 'route': '/step1'},
+    {'city': 'BANGKOK', 'country': '태국 방콕', 'route': '/step1'},
+    {'city': 'SINGAPORE', 'country': '싱가포르', 'route': '/step1'},
   ];
 
   @override
   Widget build(BuildContext context) {
+    const Color travelingPurple = Color(0xFFA78BFA);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('여행 만들기'),
-        centerTitle: true,
-        backgroundColor: Colors.pink,
+        backgroundColor: travelingPurple,
         foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ 상단 버튼
+            const SizedBox(height: 24), // 🔹 AppBar와 버튼 사이 간격 추가
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/manual_itinerary');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.shade100,
-                        borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [travelingPurple.withOpacity(0.9), travelingPurple.withOpacity(0.7)],
                       ),
-                      child: const Center(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: travelingPurple.withOpacity(0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        )
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/step1');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
                         child: Text(
                           '나의 여행 만들기',
                           style: TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.purple,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -89,22 +76,37 @@ class MakeTripScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/ai_itinerary');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade100,
-                        borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [Color(0xFFFFB74D), Color(0xFFFF8A65)]),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.orangeAccent.withOpacity(0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        )
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/ai_itinerary');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: const Center(
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
                         child: Text(
                           'AI 추천 일정 만들기',
                           style: TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.deepOrange,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -113,7 +115,6 @@ class MakeTripScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
             const Text(
               '어디로 여행을 떠나시나요?',
@@ -141,41 +142,30 @@ class MakeTripScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Container(
-                        color: Colors.grey.shade300,
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: Icon(
-                                Icons.image,
-                                size: 40,
-                                color: Colors.grey.shade600,
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.location_city, size: 36, color: travelingPurple),
+                              const SizedBox(height: 12),
+                              Text(
+                                city['city']!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            Positioned(
-                              left: 8,
-                              bottom: 8,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    city['city']!,
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  Text(
-                                    city['country']!,
-                                    style: const TextStyle(
-                                      color: Colors.black54,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                city['country']!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

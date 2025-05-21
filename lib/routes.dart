@@ -4,13 +4,13 @@ import 'package:mobile_app_function_impl/screens/home_screen.dart';
 import 'package:mobile_app_function_impl/screens/flight_search/search_screen.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/make_trip_screen.dart';
 import 'package:mobile_app_function_impl/screens/recommended_places/recommended_places_screen.dart';
+import 'package:mobile_app_function_impl/screens/recommended_places/place_detail_screen.dart';
 import 'package:mobile_app_function_impl/screens/community/community_home.dart';
 import 'package:mobile_app_function_impl/screens/community/write_post.dart';
 import 'package:mobile_app_function_impl/screens/mypage/mypage_screen.dart';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
 import 'package:mobile_app_function_impl/screens/auth/login_screen.dart';
 import 'package:mobile_app_function_impl/screens/auth/signup_screen.dart';
-import 'package:mobile_app_function_impl/screens/travel_planner/manual_itinerary_screen.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/ai_itinerary_screen.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/step1_date_selection.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/step2_attraction_selection.dart';
@@ -49,9 +49,6 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case '/signup':
       builder = (BuildContext _) => const SignupScreen();
       break;
-    case '/manual_itinerary':
-      builder = (BuildContext _) => const ManualItineraryScreen();
-      break;
     case '/ai_itinerary':
       builder = (BuildContext _) => const AiItineraryScreen();
       break;
@@ -59,16 +56,34 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       builder = (BuildContext _) => const Step1DateSelection();
       break;
     case '/step2':
-      builder = (BuildContext _) => const Step2AttractionSelection();
+      builder = (BuildContext _) => Step2AttractionSelection(tripDays: 3);
       break;
+
+
     case '/step3':
-      builder = (BuildContext _) => const Step3AccommodationSelection();
+      builder = (BuildContext context) {
+        final tripDays = settings.arguments as int;
+        return Step3AccommodationSelection(tripDays: tripDays);
+      };
       break;
+
+
     case '/step4':
       builder = (BuildContext _) => const Step4TransportationSelection();
       break;
     case '/step5':
       builder = (BuildContext _) => const Step5ItineraryGeneration();
+      break;
+    case '/place_detail':
+      builder = (BuildContext context) {
+        final args = settings.arguments as Map<String, dynamic>;
+        return PlaceDetailScreen(
+          name: args['name'],
+          city: args['city'],
+          imageUrl: args['imageUrl'],
+          rating: args['rating'],
+        );
+      };
       break;
     default:
       builder = (BuildContext _) => Scaffold(

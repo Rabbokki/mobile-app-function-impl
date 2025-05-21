@@ -4,6 +4,8 @@ import 'package:mobile_app_function_impl/data/saved_trips.dart';
 class Step5ItineraryGeneration extends StatelessWidget {
   const Step5ItineraryGeneration({super.key});
 
+  static const Color travelingPurple = Color(0xFFA78BFA);
+
   @override
   Widget build(BuildContext context) {
     final Map<String, List<String>> itinerary = {
@@ -13,10 +15,12 @@ class Step5ItineraryGeneration extends StatelessWidget {
     };
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('여행 일정 요약'),
-        backgroundColor: Colors.purple,
+        backgroundColor: travelingPurple,
         foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -31,6 +35,8 @@ class Step5ItineraryGeneration extends StatelessWidget {
               child: ListView(
                 children: itinerary.entries.map((entry) {
                   return Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 2,
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -45,7 +51,10 @@ class Step5ItineraryGeneration extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...entry.value.map((place) => Text('- $place')),
+                          ...entry.value.map((place) => Padding(
+                            padding: const EdgeInsets.only(left: 8, bottom: 4),
+                            child: Text('• $place'),
+                          )),
                         ],
                       ),
                     ),
@@ -58,15 +67,17 @@ class Step5ItineraryGeneration extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
+                  backgroundColor: travelingPurple,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
                   final newTrip = {
                     'city': '도쿄',
                     'startDate': '2025-06-01',
                     'endDate': '2025-06-04',
-                    'itinerary': itinerary, // 핵심 추가
+                    'itinerary': itinerary,
                   };
 
                   savedTrips.add(newTrip);
@@ -75,7 +86,7 @@ class Step5ItineraryGeneration extends StatelessWidget {
                     const SnackBar(content: Text('일정이 저장되었습니다!')),
                   );
 
-                  Navigator.pushNamed(context, '/mypage'); //  저장 후 이동
+                  Navigator.pushNamed(context, '/mypage');
                 },
                 child: const Text('여행 일정 저장하기'),
               ),
