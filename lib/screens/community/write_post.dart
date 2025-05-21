@@ -1,8 +1,12 @@
 import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Helper class to store removed image and index
 class _RemovedImage {
   final String url;
   final int index;
@@ -32,13 +36,12 @@ class _WritePostScreenState extends State<WritePostScreen> {
   late final Map<String, String> _reverseCategoryMapping;
   late final List<String> _categoryLabels;
   String? _selectedCategoryLabel;
-  File? _imageFile;
-  List<String>? _imageUrls; // Changed from single imageUrl to list for multiple images
+
+  List<File> _imageFiles = [];
+  List<String>? _imageUrls;
   int? _postId;
 
   static const Color travelingPurple = Color(0xFFA78BFA);
-
-  // Stack to keep removed images and their positions for undo
   final List<_RemovedImage> _removedImagesStack = [];
 
   @override
@@ -55,7 +58,6 @@ class _WritePostScreenState extends State<WritePostScreen> {
       _postId = data['id'];
 
       final backendCategoryKey = data['category'] as String?;
-
       _selectedCategoryLabel = backendCategoryKey != null
           ? _categoryMapping[backendCategoryKey]
           : null;
@@ -64,33 +66,37 @@ class _WritePostScreenState extends State<WritePostScreen> {
       _contentController.text = data['content'] ?? '';
       _tagController.text = (data['tags'] as List?)?.join(', ') ?? '';
 
-      _imageUrls = data['imageUrl'] != null
-          ? (data['imageUrl'] is List
-          ? List<String>.from(data['imageUrl'])
-          : [data['imageUrl'] as String])
+      _imageUrls = data['imgUrl'] != null
+          ? (data['imgUrl'] is List
+          ? List<String>.from(data['imgUrl'])
+          : [data['imgUrl'] as String])
           : null;
     }
   }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
+    final picked = await picker.pickMultiImage();
+
+    if (picked.isNotEmpty) {
       setState(() {
-        _imageFile = File(picked.path);
-        _imageUrls = null; // Clear old image URLs when a new image is picked
+        _imageFiles = picked.map((x) => File(x.path)).toList();
+        _imageUrls = null;
       });
     }
   }
 
-  // Method to remove an image by index
   void _removeImage(int index) {
-    if (_imageUrls == null) return;
-
-    setState(() {
-      final removedUrl = _imageUrls!.removeAt(index);
-      _removedImagesStack.add(_RemovedImage(removedUrl, index));
-    });
+    if (_imageUrls != null && index < _imageUrls!.length) {
+      setState(() {
+        final removedUrl = _imageUrls!.removeAt(index);
+        _removedImagesStack.add(_RemovedImage(removedUrl, index));
+      });
+    } else if (_imageFiles.isNotEmpty && index >= (_imageUrls?.length ?? 0)) {
+      setState(() {
+        _imageFiles.removeAt(index - (_imageUrls?.length ?? 0));
+      });
+    }
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +110,6 @@ class _WritePostScreenState extends State<WritePostScreen> {
     );
   }
 
-  // Undo the last removal
   void _undoRemoveImage() {
     if (_removedImagesStack.isEmpty) return;
 
@@ -115,66 +120,12 @@ class _WritePostScreenState extends State<WritePostScreen> {
   }
 
   Widget _buildImagePreview() {
-    if (_imageFile != null) {
-      return Image.file(_imageFile!, fit: BoxFit.cover, width: double.infinity);
-    } else if (_imageUrls != null && _imageUrls!.isNotEmpty) {
-      // Show all images as horizontal scrollable thumbnails
-      return SizedBox(
-        height: 100, // fixed height for thumbnails container
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          itemCount: _imageUrls!.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final url = _imageUrls![index];
-            return Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    url,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        width: 100,
-                        height: 100,
-                        color: Colors.grey[200],
-                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 100,
-                      height: 100,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.broken_image, color: Colors.grey),
-                    ),
-                  ),
-                ),
-                // Positioned X button
-                Positioned(
-                  top: 2,
-                  right: 2,
-                  child: GestureDetector(
-                    onTap: () => _removeImage(index),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.close, size: 18, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      );
-    } else {
+    final combinedImages = [
+      if (_imageUrls != null) ..._imageUrls!,
+      ..._imageFiles.map((e) => e.path)
+    ];
+
+    if (combinedImages.isEmpty) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -186,9 +137,119 @@ class _WritePostScreenState extends State<WritePostScreen> {
         ),
       );
     }
+
+    return SizedBox(
+      height: 100,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        itemCount: combinedImages.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final isNetwork = index < (_imageUrls?.length ?? 0);
+          final imageWidget = isNetwork
+              ? Image.network(
+            combinedImages[index],
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 100,
+              height: 100,
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          )
+              : Image.file(
+            File(combinedImages[index]),
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+          );
+
+          return Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: imageWidget,
+              ),
+              Positioned(
+                top: 2,
+                right: 2,
+                child: GestureDetector(
+                  onTap: () => _removeImage(index),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close, size: 18, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
-  void _submitPost() {
+  Future<void> updatePostRequest({
+    required int postId,
+    required Map<String, dynamic> dto,
+    required List<File> imageFiles,
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    final uri = Uri.parse('http://10.0.2.2:8080/api/posts/update/$postId');
+    final request = http.MultipartRequest('PATCH', uri);
+
+    request.headers.addAll({
+      'Access_Token': accessToken,
+      'Refresh': refreshToken,
+    });
+
+    request.files.add(http.MultipartFile.fromString(
+      'dto',
+      jsonEncode(dto),
+      contentType: MediaType('application', 'json'),
+    ));
+
+    for (File file in imageFiles) {
+      final mimeType = lookupMimeType(file.path)?.split('/') ?? ['image', 'jpeg'];
+      request.files.add(await http.MultipartFile.fromPath(
+        'postImg',
+        file.path,
+        contentType: MediaType(mimeType[0], mimeType[1]),
+      ));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      debugPrint('게시글 수정 성공');
+    } else {
+      debugPrint('게시글 수정 실패: ${response.statusCode}, ${response.body}');
+      throw Exception('게시글 수정 실패');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchPostById(int postId) async {
+    final url = Uri.parse('http://10.0.2.2:8080/api/posts/find/$postId');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      // Parse JSON response body to Map
+      final Map<String, dynamic> postMap = jsonDecode(response.body);
+      return postMap;
+    } else {
+      throw Exception('Failed to fetch post with id $postId');
+    }
+  }
+
+  void _submitPost() async {
     if (_selectedCategoryLabel == null ||
         _titleController.text.trim().isEmpty ||
         _contentController.text.trim().isEmpty) {
@@ -200,20 +261,35 @@ class _WritePostScreenState extends State<WritePostScreen> {
 
     final backendCategoryKey = _reverseCategoryMapping[_selectedCategoryLabel!]!;
 
-    final postData = {
-      'id': _postId,
+    final dto = {
       'category': backendCategoryKey,
       'title': _titleController.text.trim(),
       'content': _contentController.text.trim(),
       'tags': _tagController.text.trim().split(',').map((e) => e.trim()).toList(),
-      'imagePath': _imageFile?.path,
-      'imageUrl': List<String>.from(_imageUrls ?? []),
     };
 
-    debugPrint(widget.postData != null ? '🟣 수정된 게시글:' : '🟣 새 게시글:');
-    debugPrint(postData.toString());
+    final prefs = await SharedPreferences.getInstance();
 
-    Navigator.pop(context, postData);
+    try {
+      if (_postId != null) {
+        await updatePostRequest(
+          postId: _postId!,
+          dto: dto,
+          imageFiles: _imageFiles,
+          accessToken: prefs.getString('accessToken') ?? '',
+          refreshToken: prefs.getString('refreshToken') ?? '',
+        );
+
+        final post = await fetchPostById(_postId!);
+        Navigator.pop(context, post);
+      } else {
+        // Handle creation
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글 수정 중 오류가 발생했습니다.')),
+      );
+    }
   }
 
   @override

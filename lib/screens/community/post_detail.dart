@@ -132,12 +132,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  void _navigateToEditPage() {
-    Navigator.pushNamed(
+  void _navigateToEditPage() async {
+    final updatedPost = await Navigator.pushNamed(
       context,
       '/write_post',
       arguments: widget.post,
     );
+
+    if (updatedPost != null && mounted) {
+      setState(() {
+        widget.post.clear();
+        widget.post.addAll(updatedPost as Map<String, dynamic>);
+      });
+      _fetchLikeStatus();
+    }
   }
 
   @override
