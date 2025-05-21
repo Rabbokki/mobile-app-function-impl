@@ -1,11 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   static const Color travelingPurple = Color(0xFFA78BFA);
   static const Color lightPurple = Color(0xFFEDE9FE);
   static const Color backgroundColor = Color(0xFFF9FAFB);
+
+  bool isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    print('Access Token: $accessToken');
+
+    setState(() {
+      isLoggedIn = accessToken != null && accessToken.isNotEmpty;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +38,7 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // 상단: 로고 + 로그인/회원가입
+            // Top Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
               child: Row(
@@ -28,22 +52,16 @@ class HomeScreen extends StatelessWidget {
                       color: travelingPurple,
                     ),
                   ),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/login');
-                        },
-                        child: const Text('로그인', style: TextStyle(color: Colors.black87)),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/signup');
-                        },
-                        child: const Text('회원가입', style: TextStyle(color: Colors.black45)),
-                      ),
-                    ],
-                  )
+                  IconButton(
+                    icon: const Icon(Icons.person, color: Colors.black87),
+                    onPressed: () {
+                      if (isLoggedIn) {
+                        Navigator.pushNamed(context, '/mypage');
+                      } else {
+                        Navigator.pushNamed(context, '/login');
+                      }
+                    },
+                  ),
                 ],
               ),
             ),
@@ -59,7 +77,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // 기능 버튼들
+            // Feature Buttons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Wrap(
@@ -85,7 +103,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
             const Spacer(),
 
-            // 하단 네비게이션 바
+            // Bottom Navigation
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
@@ -95,12 +113,21 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _BottomNavItem(icon: Icons.home, label: '홈', isActive: true, onTap: () {
-                    Navigator.pushNamed(context, '/');
-                  }),
-                  _BottomNavItem(icon: Icons.person, label: '마이페이지', onTap: () {
-                    Navigator.pushNamed(context, '/mypage');
-                  }),
+                  _BottomNavItem(
+                    icon: Icons.home,
+                    label: '홈',
+                    isActive: true,
+                    onTap: () {
+                      Navigator.pushNamed(context, '/');
+                    },
+                  ),
+                  _BottomNavItem(
+                    icon: Icons.person,
+                    label: '마이페이지',
+                    onTap: () {
+                      Navigator.pushNamed(context, '/mypage');
+                    },
+                  ),
                 ],
               ),
             ),
@@ -111,26 +138,27 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+
 // --- 기능 버튼 위젯
 class _MainFeatureButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback? onTap;  // <-- Add this callback
+  final VoidCallback? onTap;
 
   const _MainFeatureButton({
     Key? key,
     required this.icon,
     required this.label,
-    this.onTap,   // <-- Accept it in constructor
+    this.onTap,
   }) : super(key: key);
 
   static const Color travelingPurple = Color(0xFFA78BFA);
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(   // <-- Wrap with InkWell for ripple effect and tap handling
+    return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),  // make ripple respect border radius
+      borderRadius: BorderRadius.circular(24),
       child: Container(
         width: 120,
         height: 120,
@@ -162,26 +190,26 @@ class _MainFeatureButton extends StatelessWidget {
               child: Icon(icon, color: Colors.white),
             ),
             const SizedBox(height: 8),
-            Text(label,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
     );
   }
 }
+
 // --- 하단 네비게이션 바 아이템
 class _BottomNavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
-  final VoidCallback? onTap; // Add callback for tap
+  final VoidCallback? onTap;
 
   const _BottomNavItem({
     required this.icon,
     required this.label,
     this.isActive = false,
-    this.onTap, // accept it
+    this.onTap,
     super.key,
   });
 
@@ -189,13 +217,13 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material( // Needed for InkWell ripple effect
+    return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12), // optional: rounding ripple
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8), // optional padding for tap target
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

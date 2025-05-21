@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;  // Add http package in pubspec.yaml
 
 class CommunityHomeScreen extends StatefulWidget {
   const CommunityHomeScreen({super.key});
@@ -12,18 +14,29 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
   final TextEditingController _searchController = TextEditingController();
 
   static const Color travelingPurple = Color(0xFFA78BFA);
-  static const List<String> tabs = ['꿀팁 게시판', '자유게시판', '여행메이트'];
+  static const List<String> tabs = ['전체 보기', '꿀팁 게시판', '자유게시판', '여행메이트'];
 
-  List<Map<String, dynamic>> dummyPosts = [
-    {'title': '여행 짐싸는 꿀팁', 'author': '유저1'},
-    {'title': '혼자 도쿄 가기 후기', 'author': '유저2'},
-    {'title': '유럽 저가항공 총정리', 'author': '유저3'},
-  ];
+  List<Map<String, dynamic>> posts = [];
+  bool isLoading = false;
+  String currentCategory = '';
+  String currentSearch = '';
+
+  // Map tab label to backend category
+  Map<String, String?> categoryMap = {
+    '전체 보기': null,
+    '꿀팁 게시판': 'TIPS',
+    '자유게시판': 'FREE',
+    '여행메이트': 'MATE',
+  };
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this);
+    _tabController.addListener(_handleTabChange);
+
+    // Initially load all posts
+    _fetchPosts();
   }
 
   @override
@@ -33,15 +46,66 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
     super.dispose();
   }
 
+  void _handleTabChange() {
+    if (_tabController.indexIsChanging) return;
+    setState(() {
+      currentCategory = categoryMap[tabs[_tabController.index]] ?? '';
+      _fetchPosts();
+    });
+  }
+
+  Future<void> _fetchPosts() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Build URL with query params
+      final queryParameters = <String, String>{};
+      if (currentCategory.isNotEmpty) {
+        queryParameters['category'] = currentCategory;
+      }
+      if (currentSearch.isNotEmpty) {
+        queryParameters['search'] = currentSearch;
+      }
+
+      final uri = Uri.http(
+        '10.0.2.2:8080', // <-- replace with your backend host (without http/s)
+        '/api/posts',
+        queryParameters.isEmpty ? null : queryParameters,
+      );
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        setState(() {
+          posts = data.map((e) => e as Map<String, dynamic>).toList();
+        });
+      } else {
+        debugPrint('Failed to fetch posts. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   void _onSearch() {
-    debugPrint('검색어: ${_searchController.text}');
+    setState(() {
+      currentSearch = _searchController.text.trim();
+      _fetchPosts();
+    });
   }
 
   void _onWritePost() async {
     final result = await Navigator.pushNamed(context, '/write_post');
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
-        dummyPosts.insert(0, result); // 새 글을 맨 위에 추가
+        posts.insert(0, result); // Add new post on top locally
       });
     }
   }
@@ -85,6 +149,7 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
                       ),
                       prefixIcon: const Icon(Icons.search),
                     ),
+                    onSubmitted: (_) => _onSearch(),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -100,28 +165,25 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
             ),
           ),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: tabs.map((label) {
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: dummyPosts.length,
-                  itemBuilder: (context, index) {
-                    final post = dummyPosts[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      elevation: 1,
-                      child: ListTile(
-                        title: Text(post['title'] ?? ''),
-                        subtitle: Text('작성자: ${post['author'] ?? '익명'}'),
-                        onTap: () {
-                          debugPrint('클릭한 게시글: ${post['title']}');
-                        },
-                      ),
-                    );
-                  },
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 1,
+                  child: ListTile(
+                    title: Text(post['title'] ?? ''),
+                    subtitle: Text('작성자: ${post['author'] ?? '익명'}'),
+                    onTap: () {
+                      debugPrint('클릭한 게시글: ${post['title']}');
+                    },
+                  ),
                 );
-              }).toList(),
+              },
             ),
           )
         ],
