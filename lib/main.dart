@@ -17,7 +17,7 @@ class TravelingApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       initialRoute: '/',
-      routes: appRoutes,
+      onGenerateRoute: onGenerateRoute,
     );
   }
 }
