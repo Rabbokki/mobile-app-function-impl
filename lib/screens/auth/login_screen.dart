@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
           print('✅ Login successful: $accessToken');
 
           final userInfoResponse = await http.get(
-            Uri.parse('http://10.0.2.2:8080/api/accounts/me'),
+            Uri.parse('http://10.0.2.2:8080/api/accounts/mypage'),
             headers: {
               'Content-Type': 'application/json',
               'Access_Token': accessToken,

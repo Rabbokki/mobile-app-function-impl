@@ -51,7 +51,29 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _fetchMyInfo();
+    _printUserInfoJsonFromPrefs();
   }
+
+  Future<void> _printUserInfoJsonFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userInfoString = prefs.getString('userInfo');
+
+    if (userInfoString == null) {
+      debugPrint('No userInfo found in SharedPreferences.');
+      return;
+    }
+
+    final userInfo = json.decode(userInfoString);
+    debugPrint('===== Decoded userInfo JSON =====');
+    debugPrint(jsonEncode(userInfo)); // Pretty prints the whole object
+    debugPrint('Nickname: ${userInfo['nickname']}');
+    debugPrint('Email: ${userInfo['email']}');
+    debugPrint('Account ID: ${userInfo['id']}');
+    debugPrint('Level: ${userInfo['level']}');
+    debugPrint('Image URL: ${userInfo['imgUrl']}');
+    debugPrint('=================================');
+  }
+
 
   Future<void> _fetchMyInfo() async {
     final url = Uri.parse('http://10.0.2.2:8080/api/accounts/mypage');
@@ -352,41 +374,31 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     final nickname = myInfo?['nickname'] ?? '사용자';
     final email = myInfo?['email'] ?? '이메일 정보 없음';
     final level = myInfo?['level'] ?? 'Lv.1';
-    final percent = myInfo?['expPercent'] ?? 0;
+    final imgUrl = myInfo?['imgUrl'];
 
     return Container(
       padding: const EdgeInsets.all(16),
       color: travelingPurple.withOpacity(0.1),
       child: Row(
         children: [
-          const CircleAvatar(radius: 30, child: Icon(Icons.person, size: 30)),
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: imgUrl != null && imgUrl.isNotEmpty
+                ? NetworkImage(imgUrl)
+                : null,
+            child: imgUrl == null || imgUrl.isEmpty
+                ? const Icon(Icons.person, size: 30)
+                : null,
+          ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(nickname, style: const TextStyle(fontWeight: FontWeight.bold)),
               Text(email),
-              Text('여행 레벨: $level ($percent%)', style: const TextStyle(fontSize: 12)),
+              Text(level),
             ],
           ),
-          const Spacer(),
-          Column(
-            children: [
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: travelingPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-                child: const Text('설정'),
-              ),
-              const TextButton(
-                onPressed: null,
-                child: Text('프로필 수정', style: TextStyle(color: travelingPurple)),
-              ),
-            ],
-          )
         ],
       ),
     );

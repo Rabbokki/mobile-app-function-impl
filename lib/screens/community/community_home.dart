@@ -177,9 +177,34 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
                   elevation: 1,
                   child: ListTile(
                     title: Text(post['title'] ?? ''),
-                    subtitle: Text('작성자: ${post['author'] ?? '익명'}'),
-                    onTap: () {
-                      debugPrint('클릭한 게시글: ${post['title']}');
+                    subtitle: Text('작성자: ${post['userName'] ?? '익명'}'),
+                    onTap: () async {
+                      print('biang');
+                      try {
+                        final response = await http.get(
+                          Uri.parse("http://10.0.2.2:8080/api/posts/find/${post['id']}"),
+                        );
+
+                        if (response.statusCode == 200) {
+                          final post = json.decode(utf8.decode(response.bodyBytes));
+
+                          if (context.mounted) {
+                            Navigator.pushNamed(
+                              context,
+                              '/post_detail',
+                              arguments: post,
+                            );
+                          }
+                        } else {
+                          throw Exception('상태 코드: ${response.statusCode}');
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('게시글 불러오기 실패: $e')),
+                          );
+                        }
+                      }
                     },
                   ),
                 );
