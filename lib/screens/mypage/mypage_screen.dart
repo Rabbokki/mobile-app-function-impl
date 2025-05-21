@@ -1,11 +1,11 @@
-// ✅ 마이페이지 색상 업데이트: 회원가입 테마와 정확히 통일
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'dart:convert';
-import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
-import 'package:mobile_app_function_impl/data/saved_trips.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../data/reservation/reservation_service.dart';
+import 'trip_detail.dart'; // 내 여행 일정 상세보기
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -19,10 +19,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   Map<String, dynamic>? myInfo;
   bool isLoading = true;
 
-  final List<Map<String, String>> dummyReservations = [
-    {'from': 'ICN', 'to': 'NRT', 'date': '2025-06-01', 'airline': '대한항공'},
-    {'from': 'ICN', 'to': 'CDG', 'date': '2025-07-10', 'airline': '에어프랑스'},
-  ];
+  List<dynamic> reservations = [];
+  bool isLoadingReservations = true;
+
 
   final List<Map<String, String>> dummySavedItems = [
     {'name': '도쿄 스카이트리', 'location': '도쿄, 일본', 'type': '명소', 'savedDate': '2025.04.15'},
@@ -44,6 +43,22 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     },
   ];
 
+  final List<Map<String, dynamic>> savedTrips = [
+    {
+      'city': '도쿄',
+      'startDate': '2025-06-01',
+      'endDate': '2025-06-10',
+      'itinerary': '도쿄 여행 일정 상세 내용',
+    },
+    {
+      'city': '파리',
+      'startDate': '2025-07-15',
+      'endDate': '2025-07-25',
+      'itinerary': '파리 여행 일정 상세 내용',
+    },
+  ];
+
+
   static const Color travelingPurple = Color(0xFFA78BFA); // 회원가입 기준 색상
 
   @override
@@ -51,45 +66,21 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _fetchMyInfo();
-    _printUserInfoJsonFromPrefs();
+    _fetchReservations();  // 항상 최신 예약 목록 가져옴
   }
-
-  Future<void> _printUserInfoJsonFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userInfoString = prefs.getString('userInfo');
-
-    if (userInfoString == null) {
-      debugPrint('No userInfo found in SharedPreferences.');
-      return;
-    }
-
-    final userInfo = json.decode(userInfoString);
-    debugPrint('===== Decoded userInfo JSON =====');
-    debugPrint(jsonEncode(userInfo)); // Pretty prints the whole object
-    debugPrint('Nickname: ${userInfo['nickname']}');
-    debugPrint('Email: ${userInfo['email']}');
-    debugPrint('Account ID: ${userInfo['id']}');
-    debugPrint('Level: ${userInfo['level']}');
-    debugPrint('Image URL: ${userInfo['imgUrl']}');
-    debugPrint('=================================');
-  }
-
 
   Future<void> _fetchMyInfo() async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/accounts/mypage');
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('accessToken');
-    final refreshToken = prefs.getString('refreshToken');
 
     if (accessToken == null) {
-      // No token found — maybe redirect to login
-      debugPrint('No access token found, redirecting to login.');
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
       return;
     }
 
-    print('Access token: $accessToken');
+    final url = Uri.parse('http://10.0.2.2:8080/api/accounts/mypage');
+
 
     try {
       final response = await http.get(
@@ -97,12 +88,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         headers: {
           'Content-Type': 'application/json',
           'Access_Token': accessToken,
-          'Refresh': refreshToken ?? '',
         },
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
           myInfo = data;
           isLoading = false;
@@ -111,9 +101,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         setState(() {
           isLoading = false;
         });
-        debugPrint('Failed to load profile: ${response.statusCode}');
         if (response.statusCode == 401) {
-          // Token expired or invalid, logout user
           await prefs.clear();
           if (!mounted) return;
           Navigator.pushReplacementNamed(context, '/login');
@@ -126,6 +114,36 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       debugPrint('Error fetching profile: $e');
     }
   }
+
+  // 예약 목록 불러오기
+  Future<void> _fetchReservations() async {
+    setState(() => isLoadingReservations = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final accessToken = prefs.getString('accessToken');
+
+      if (accessToken == null) {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+
+      final reservationService = ReservationService();
+      final res = await reservationService.fetchMyReservations(accessToken: accessToken);
+      debugPrint('예약 데이터: $res');
+
+      setState(() {
+        reservations = res;
+        isLoadingReservations = false;
+      });
+    } catch (e) {
+      setState(() => isLoadingReservations = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('예약 목록 불러오기 실패: $e')),
+      );
+    }
+  }
+
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -141,16 +159,14 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     try {
       final response = await http.post(
         url,
-        headers: {
-          'Access_Token': accessToken,
-        },
+        headers: {'Access_Token': accessToken},
       );
 
       if (response.statusCode == 200) {
         debugPrint('Logout successful');
         await prefs.clear(); // Clear tokens
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/login'); // Redirect to login
+        Navigator.pushReplacementNamed(context, '/login');
       } else {
         debugPrint('Logout failed: ${response.statusCode}');
       }
@@ -158,7 +174,6 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       debugPrint('Error during logout: $e');
     }
   }
-
 
   @override
   void dispose() {
@@ -241,6 +256,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                     ),
                   ),
                 ),
+
                 ...savedTrips.map((trip) => Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -289,23 +305,36 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   }
 
   Widget _buildReservationTab() {
+    if (isLoadingReservations) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (reservations.isEmpty) {
+      return const Center(child: Text('예약 내역이 없습니다.'));
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: dummyReservations.length,
+      itemCount: reservations.length,
       itemBuilder: (context, index) {
-        final item = dummyReservations[index];
+        final res = reservations[index];
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
           elevation: 1.5,
           child: ListTile(
-            title: Text('${item['from']} → ${item['to']}'),
-            subtitle: Text('항공사: ${item['airline']}, 날짜: ${item['date']}'),
-            trailing: const Text('상세보기', style: TextStyle(color: travelingPurple)),
+            title: Text('${res['carrier']} (${res['flightNumber']})'),
+            subtitle: Text(
+              '출발: ${res['departureAirport']} (${res['departureTime']})\n'
+                  '도착: ${res['arrivalAirport']} (${res['arrivalTime']})\n'
+                  '탑승객: ${res['passengerCount']}명\n'
+                  '좌석: ${(res['selectedSeats'] as List<dynamic>).join(', ')}\n'
+                  '총 금액: ₩${NumberFormat('#,###').format(res['totalPrice'])}',
+            ),
+
           ),
         );
       },
     );
   }
+
 
   Widget _buildSavedTab() {
     return ListView.builder(
