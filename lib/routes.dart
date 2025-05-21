@@ -5,6 +5,7 @@ import 'package:mobile_app_function_impl/screens/flight_search/search_screen.dar
 import 'package:mobile_app_function_impl/screens/travel_planner/make_trip_screen.dart';
 import 'package:mobile_app_function_impl/screens/recommended_places/recommended_places_screen.dart';
 import 'package:mobile_app_function_impl/screens/community/community_home.dart';
+import 'package:mobile_app_function_impl/screens/community/post_detail.dart';
 import 'package:mobile_app_function_impl/screens/community/write_post.dart';
 import 'package:mobile_app_function_impl/screens/mypage/mypage_screen.dart';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
@@ -37,8 +38,13 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case '/community':
       builder = (BuildContext _) => const CommunityHomeScreen();
       break;
+    case '/post_detail':
+      final post = settings.arguments as Map<String, dynamic>;
+      builder = (_) => PostDetailScreen(post: post);
+      break;
     case '/write_post':
-      builder = (BuildContext _) => const WritePostScreen();
+      final args = settings.arguments as Map<String, dynamic>?; // safely cast
+      builder = (BuildContext _) => WritePostScreen(postData: args);
       break;
     case '/mypage':
       builder = (BuildContext _) => const MyPageScreen();
