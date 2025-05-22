@@ -3,15 +3,55 @@ import 'package:flutter/material.dart';
 class MakeTripScreen extends StatelessWidget {
   const MakeTripScreen({super.key});
 
-  final List<Map<String, String>> destinations = const [
-    {'city': 'OSAKA', 'country': '일본 오사카', 'route': '/step1'},
-    {'city': 'TOKYO', 'country': '일본 도쿄', 'route': '/step1'},
-    {'city': 'FUKUOKA', 'country': '일본 후쿠오카', 'route': '/step1'},
-    {'city': 'PARIS', 'country': '프랑스 파리', 'route': '/step1'},
-    {'city': 'ROME', 'country': '이탈리아 로마', 'route': '/step1'},
-    {'city': 'VENICE', 'country': '이탈리아 베니스', 'route': '/step1'},
-    {'city': 'BANGKOK', 'country': '태국 방콕', 'route': '/step1'},
-    {'city': 'SINGAPORE', 'country': '싱가포르', 'route': '/step1'},
+  static const List<Map<String, String>> destinations = [
+    {
+      'city': 'OSAKA',
+      'country': '일본 오사카',
+      'route': '/step1',
+      'image': 'assets/images/osaka.jpg',
+    },
+    {
+      'city': 'TOKYO',
+      'country': '일본 도쿄',
+      'route': '/step1',
+      'image': 'assets/images/tokyo.png',
+    },
+    {
+      'city': 'FUKUOKA',
+      'country': '일본 후쿠오카',
+      'route': '/step1',
+      'image': 'assets/images/fukuoka.png',
+    },
+    {
+      'city': 'PARIS',
+      'country': '프랑스 파리',
+      'route': '/step1',
+      'image': 'assets/images/paris.png',
+    },
+    {
+      'city': 'ROME',
+      'country': '이탈리아 로마',
+      'route': '/step1',
+      'image': 'assets/images/rome.png',
+    },
+    {
+      'city': 'VENICE',
+      'country': '이탈리아 베니스',
+      'route': '/step1',
+      'image': 'assets/images/venice.png',
+    },
+    {
+      'city': 'BANGKOK',
+      'country': '태국 방콕',
+      'route': '/step1',
+      'image': 'assets/images/bangkok.png',
+    },
+    {
+      'city': 'SINGAPORE',
+      'country': '싱가포르',
+      'route': '/step1',
+      'image': 'assets/images/singapore.png',
+    },
   ];
 
   @override
@@ -30,7 +70,7 @@ class MakeTripScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 24), // 🔹 AppBar와 버튼 사이 간격 추가
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -78,7 +118,7 @@ class MakeTripScreen extends StatelessWidget {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [Color(0xFFFFB74D), Color(0xFFFF8A65)]),
+                      gradient: const LinearGradient(colors: [Color(0xFFFFB74D), Color(0xFFFF8A65)]),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -126,47 +166,63 @@ class MakeTripScreen extends StatelessWidget {
                 itemCount: destinations.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 3 / 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
+                  childAspectRatio: 3 / 2,
                 ),
                 itemBuilder: (context, index) {
                   final city = destinations[index];
                   return GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, city['route']!);
+                      Navigator.pushNamed(
+                          context,
+                          city['route']!,
+                          arguments: {'city': city['city']} //
+                      );
                     },
-                    child: Card(
-                      clipBehavior: Clip.antiAlias,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Container(
-                        color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.location_city, size: 36, color: travelingPurple),
-                              const SizedBox(height: 12),
-                              Text(
-                                city['city']!,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                city['country']!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            city['image']!,
+                            fit: BoxFit.cover,
                           ),
-                        ),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.black.withOpacity(0.5), Colors.transparent],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  city['city']!,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  city['country']!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );

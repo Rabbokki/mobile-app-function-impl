@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../state/travel_plan_provider.dart';
 
 class Step1DateSelection extends StatefulWidget {
   const Step1DateSelection({super.key});
@@ -10,7 +12,17 @@ class Step1DateSelection extends StatefulWidget {
 class _Step1DateSelectionState extends State<Step1DateSelection> {
   DateTime? startDate;
   DateTime? endDate;
+  String? selectedCity;
   static const Color travelingPurple = Color(0xFFA78BFA);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args.containsKey('city')) {
+      selectedCity = args['city']; // OSAKA, PARIS 등
+    }
+  }
 
   Future<void> _selectDateRange() async {
     final DateTimeRange? picked = await showDateRangePicker(
@@ -35,14 +47,22 @@ class _Step1DateSelectionState extends State<Step1DateSelection> {
         endDate = picked.end;
       });
 
-      // ✅ 날짜 선택 후 바로 Step2로 이동하면서 tripDays 전달
+      // ✅ 날짜 Provider에 저장
+      final provider = context.read<TravelPlanProvider>();
+      provider.setDates(
+        picked.start.toString().split(' ')[0],
+        picked.end.toString().split(' ')[0],
+      );
+
       final tripDays = picked.end.difference(picked.start).inDays + 1;
+
       Future.microtask(() {
         Navigator.pushNamed(
           context,
           '/step2',
           arguments: {
             'tripDays': tripDays,
+            'city': selectedCity,
           },
         );
       });
