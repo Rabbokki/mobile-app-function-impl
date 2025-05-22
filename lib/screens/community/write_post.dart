@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:mobile_app_function_impl/utils/post_service.dart';
+
 class _RemovedImage {
   final String url;
   final int index;
@@ -80,8 +82,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
 
     if (picked.isNotEmpty) {
       setState(() {
-        _imageFiles = picked.map((x) => File(x.path)).toList();
-        _imageUrls = null;
+        _imageFiles.addAll(picked.map((x) => File(x.path)));
       });
     }
   }
@@ -122,8 +123,11 @@ class _WritePostScreenState extends State<WritePostScreen> {
   Widget _buildImagePreview() {
     final combinedImages = [
       if (_imageUrls != null) ..._imageUrls!,
-      ..._imageFiles.map((e) => e.path)
+      ..._imageFiles.map((e) => e.path),
     ];
+
+    // We add one more item for the '+' button
+    final itemCount = combinedImages.length + 1;
 
     if (combinedImages.isEmpty) {
       return const Center(
@@ -143,9 +147,34 @@ class _WritePostScreenState extends State<WritePostScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        itemCount: combinedImages.length,
+        itemCount: itemCount,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
+          if (index == combinedImages.length) {
+            return Align(
+              alignment: Alignment.topCenter,
+              child: InkWell(
+                onTap: _pickImage,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.add,
+                      size: 24,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
           final isNetwork = index < (_imageUrls?.length ?? 0);
           final imageWidget = isNetwork
               ? Image.network(
@@ -194,15 +223,14 @@ class _WritePostScreenState extends State<WritePostScreen> {
     );
   }
 
-  Future<void> updatePostRequest({
-    required int postId,
+  Future<Map<String, dynamic>> createPostRequest({
     required Map<String, dynamic> dto,
     required List<File> imageFiles,
     required String accessToken,
     required String refreshToken,
   }) async {
-    final uri = Uri.parse('http://10.0.2.2:8080/api/posts/update/$postId');
-    final request = http.MultipartRequest('PATCH', uri);
+    final uri = Uri.parse('http://10.0.2.2:8080/api/posts/create');
+    final request = http.MultipartRequest('POST', uri);
 
     request.headers.addAll({
       'Access_Token': accessToken,
@@ -228,9 +256,61 @@ class _WritePostScreenState extends State<WritePostScreen> {
     final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200) {
+      debugPrint('게시글 생성 성공');
+
+      final Map<String, dynamic> responseData =
+      json.decode(utf8.decode(response.bodyBytes));
+
+      return responseData;
+    } else {
+      debugPrint('게시글 생성 실패: ${response.statusCode}, ${utf8.decode(response.bodyBytes)}');
+      throw Exception('게시글 생성 실패');
+    }
+  }
+
+  Future<void> updatePostRequest({
+    required int postId,
+    required Map<String, dynamic> dto,
+    required List<File> imageFiles,
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    final uri = Uri.parse('http://10.0.2.2:8080/api/posts/update/$postId');
+    final request = http.MultipartRequest('PATCH', uri);
+
+    request.headers.addAll({
+      'Access_Token': accessToken,
+      'Refresh': refreshToken,
+    });
+
+    request.files.add(http.MultipartFile.fromString(
+      'dto',
+      jsonEncode(dto),
+      contentType: MediaType('application', 'json'),
+    ));
+
+    request.files.add(http.MultipartFile.fromString(
+      'remainImgUrl',
+      jsonEncode(_imageUrls ?? []),
+      contentType: MediaType('application', 'json'),
+    ));
+
+    for (File file in imageFiles) {
+      final mimeType = lookupMimeType(file.path)?.split('/') ?? ['image', 'jpeg'];
+      request.files.add(await http.MultipartFile.fromPath(
+        'postImg',
+        file.path,
+        contentType: MediaType(mimeType[0], mimeType[1]),
+      ));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
       debugPrint('게시글 수정 성공');
     } else {
-      debugPrint('게시글 수정 실패: ${response.statusCode}, ${response.body}');
+      debugPrint('게시글 수정 실패: ${response.statusCode}, ${json.decode(utf8.decode(response.bodyBytes))}');
       throw Exception('게시글 수정 실패');
     }
   }
@@ -241,8 +321,7 @@ class _WritePostScreenState extends State<WritePostScreen> {
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      // Parse JSON response body to Map
-      final Map<String, dynamic> postMap = jsonDecode(response.body);
+      final Map<String, dynamic> postMap = json.decode(utf8.decode(response.bodyBytes));
       return postMap;
     } else {
       throw Exception('Failed to fetch post with id $postId');
@@ -283,7 +362,13 @@ class _WritePostScreenState extends State<WritePostScreen> {
         final post = await fetchPostById(_postId!);
         Navigator.pop(context, post);
       } else {
-        // Handle creation
+        final newPost = await createPostRequest(
+          dto: dto,
+          imageFiles: _imageFiles,
+          accessToken: prefs.getString('accessToken') ?? '',
+          refreshToken: prefs.getString('refreshToken') ?? '',
+        );
+        Navigator.pop(context, newPost);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -322,6 +407,8 @@ class _WritePostScreenState extends State<WritePostScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _titleController,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
               decoration: const InputDecoration(
                 labelText: '제목',
                 border: OutlineInputBorder(),
@@ -330,6 +417,8 @@ class _WritePostScreenState extends State<WritePostScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _contentController,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
               maxLines: 10,
               decoration: const InputDecoration(
                 labelText: '내용',
@@ -356,6 +445,8 @@ class _WritePostScreenState extends State<WritePostScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _tagController,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
               decoration: const InputDecoration(
                 labelText: '태그 (쉼표로 구분)',
                 hintText: '예: 도쿄, 일본, 맛집',
