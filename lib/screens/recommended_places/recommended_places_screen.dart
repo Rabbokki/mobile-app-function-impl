@@ -207,7 +207,7 @@ class _RecommendedPlacesScreenState extends State<RecommendedPlacesScreen> {
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+      final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
       return data.map((e) => RecommendedPlace.fromJson(e)).toList();
     } else {
       throw Exception('추천 명소 불러오기 실패');

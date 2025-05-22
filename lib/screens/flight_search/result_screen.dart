@@ -6,12 +6,12 @@ import '../../../data/flight_search/flight_search_service.dart';
 
 class ResultScreen extends StatefulWidget {
   final List<FlightInfo> flightResults;
-  final int initialPassengerCount; // 추가
+  final int initialPassengerCount;
 
   const ResultScreen({
     super.key,
     required this.flightResults,
-    this.initialPassengerCount = 1, // 기본값 1명
+    this.initialPassengerCount = 1,
   });
 
   @override
@@ -20,13 +20,12 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   final FlightSearchService _flightService = FlightSearchService();
-
-  late int selectedPassengerCount; // late로 변경
+  late int selectedPassengerCount;
 
   @override
   void initState() {
     super.initState();
-    selectedPassengerCount = widget.initialPassengerCount; // 초기값 설정
+    selectedPassengerCount = widget.initialPassengerCount;
   }
 
   String _formatDateTime(String rawDateTime) {
@@ -82,12 +81,11 @@ class _ResultScreenState extends State<ResultScreen> {
       appBar: AppBar(
         title: const Text('검색 결과'),
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFFA78BFA),
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // 탑승객 수 선택 드롭다운
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
@@ -113,8 +111,6 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
           ),
           const Divider(height: 1),
-
-          // 검색 결과 리스트
           Expanded(
             child: widget.flightResults.isEmpty
                 ? const Center(child: Text('검색 결과가 없습니다.'))
@@ -124,10 +120,8 @@ class _ResultScreenState extends State<ResultScreen> {
                 final flight = widget.flightResults[index];
 
                 return Card(
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 3,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -137,12 +131,13 @@ class _ResultScreenState extends State<ResultScreen> {
                         Text(
                           '${flight.carrier} (${flight.flightNumber})',
                           style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('출발지: ${flight.departureAirport}'),
                             Text('도착지: ${flight.arrivalAirport}'),
@@ -150,32 +145,24 @@ class _ResultScreenState extends State<ResultScreen> {
                         ),
                         const SizedBox(height: 4),
                         Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                                '출발시간: ${_formatDateTime(flight.departureTime)}'),
-                            Text(
-                                '도착시간: ${_formatDateTime(flight.arrivalTime)}'),
+                            Text('출발시간: ${_formatDateTime(flight.departureTime)}'),
+                            Text('도착시간: ${_formatDateTime(flight.arrivalTime)}'),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text(
                           '💸 가격: ${NumberFormat('#,###').format(int.parse(flight.price) * selectedPassengerCount)} ${flight.currency} (총 ${selectedPassengerCount}명)',
                         ),
-                        if (flight.returnDepartureTime != null &&
-                            flight.returnDepartureTime!.isNotEmpty)
+                        if (flight.returnDepartureTime != null && flight.returnDepartureTime!.isNotEmpty)
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Divider(height: 24),
-                              const Text('🛬 귀국 여정',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              Text(
-                                  '귀국 출발: ${_formatDateTime(flight.returnDepartureTime!)}'),
-                              Text(
-                                  '귀국 도착: ${_formatDateTime(flight.returnArrivalTime!)}'),
+                              const Text('🛬 귀국 여정', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Text('귀국 출발: ${_formatDateTime(flight.returnDepartureTime!)}'),
+                              Text('귀국 도착: ${_formatDateTime(flight.returnArrivalTime!)}'),
                             ],
                           ),
                         const SizedBox(height: 16),
@@ -186,7 +173,7 @@ class _ResultScreenState extends State<ResultScreen> {
                             icon: const Icon(Icons.check_circle),
                             label: const Text('선택하기'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                              backgroundColor: const Color(0xFFA78BFA), // 보라색 버튼 적용
                               foregroundColor: Colors.white,
                             ),
                           ),

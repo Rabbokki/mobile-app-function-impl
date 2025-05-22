@@ -9,7 +9,8 @@ class PaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int passengerCount = flightWithPassenger['passengerCount'] ?? 1;
-    final List<String> selectedSeats = (flightWithPassenger['selectedSeats'] ?? [])?.cast<String>() ?? [];
+    final List<String> selectedSeats =
+        (flightWithPassenger['selectedSeats'] ?? [])?.cast<String>() ?? [];
     final int price = flightWithPassenger['price'] is String
         ? int.tryParse(flightWithPassenger['price']) ?? 0
         : flightWithPassenger['price'];
@@ -18,6 +19,8 @@ class PaymentScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('결제하기'),
         centerTitle: true,
+        backgroundColor: const Color(0xFFA78BFA),
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -39,14 +42,17 @@ class PaymentScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               '총 결제 금액: ${NumberFormat('#,###').format(price * passengerCount)} ${flightWithPassenger['currency']}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFA78BFA), // 💜 보라색 강조
+              ),
             ),
             const Spacer(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // TODO: 실제 결제 로직 구현
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -55,7 +61,7 @@ class PaymentScreen extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).pop(); // AlertDialog 닫고
+                            Navigator.of(context).pop(); // 다이얼로그 닫기
                             Navigator.pushReplacementNamed(context, '/mypage'); // 마이페이지로 이동
                           },
                           child: const Text('확인'),
@@ -64,10 +70,12 @@ class PaymentScreen extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text('결제하기'),
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFA78BFA), // 💜 버튼 색상
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
+                child: const Text('결제하기'),
               ),
             )
           ],

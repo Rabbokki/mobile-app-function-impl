@@ -17,6 +17,8 @@ class FlightDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('항공편 상세 정보'),
+        backgroundColor: const Color(0xFFA78BFA), // 보라색 직접 지정
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -25,25 +27,29 @@ class FlightDetailScreen extends StatelessWidget {
           children: [
             Text(
               '${flight['airline']} (${flight['flightNumber']})',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             Text('출발지: ${flight['departureAirport']}',
-                style: Theme.of(context).textTheme.bodyMedium),
+                style: const TextStyle(fontSize: 16)),
             Text('도착지: ${flight['arrivalAirport']}',
-                style: Theme.of(context).textTheme.bodyMedium),
+                style: const TextStyle(fontSize: 16)),
             Text('출발 시간: ${flight['departureTime']}',
-                style: Theme.of(context).textTheme.bodyMedium),
+                style: const TextStyle(fontSize: 16)),
             Text('도착 시간: ${flight['arrivalTime']}',
-                style: Theme.of(context).textTheme.bodyMedium),
+                style: const TextStyle(fontSize: 16)),
             const Divider(height: 32),
             Text('👥 탑승객 수: $passengerCount명',
-                style: Theme.of(context).textTheme.bodyMedium),
+                style: const TextStyle(fontSize: 16)),
             Text(
               '💰 총 가격: ${NumberFormat('#,###').format(price * passengerCount)} ${flight['currency']}',
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+              style: const TextStyle(
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+                color: Color(0xFFA78BFA), // 보라색 강조
               ),
             ),
             const Spacer(),
@@ -58,7 +64,7 @@ class FlightDetailScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor: const Color(0xFFA78BFA), // 버튼 보라색
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   textStyle: const TextStyle(fontSize: 16),

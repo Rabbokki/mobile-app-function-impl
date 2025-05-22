@@ -78,7 +78,7 @@ class _SearchScreenState extends State<SearchScreen> {
         MaterialPageRoute(
           builder: (_) => ResultScreen(
             flightResults: results,
-            initialPassengerCount: passengers,  // 이 부분을 탑승객 수 변수로 전달
+            initialPassengerCount: passengers,
           ),
         ),
       );
@@ -131,7 +131,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         title: const Text('항공권 검색'),
         centerTitle: true,
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFFA78BFA),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -139,7 +139,6 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 왕복 / 편도
             Row(
               children: ['왕복', '편도'].map((type) {
                 return Row(
@@ -158,7 +157,6 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 출발지 자동완성
             TextField(
               controller: _departureController,
               decoration: const InputDecoration(
@@ -173,7 +171,6 @@ class _SearchScreenState extends State<SearchScreen> {
             )),
             const SizedBox(height: 12),
 
-            // 도착지 자동완성
             TextField(
               controller: _arrivalController,
               decoration: const InputDecoration(
@@ -188,7 +185,6 @@ class _SearchScreenState extends State<SearchScreen> {
             )),
             const SizedBox(height: 20),
 
-            // 날짜
             Row(
               children: [
                 Expanded(
@@ -225,7 +221,6 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 탑승객 수
             DropdownButtonFormField<int>(
               value: passengers,
               items: List.generate(9, (index) => index + 1)
@@ -242,13 +237,13 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 30),
 
-            // 검색 버튼
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: isLoading ? null : _handleSearch,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: const Color(0xFFA78BFA), // 💜 보라색 버튼
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: isLoading

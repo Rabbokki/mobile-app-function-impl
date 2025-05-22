@@ -13,11 +13,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   late int passengerCount;
   late List<String> selectedSeats;
 
-  // 비행기 좌석 행수와 열(알파벳)
   final int rowCount = 30;
   final List<String> seatColumns = ['A', 'B', 'C', 'D', 'E'];
 
-  // 임의로 예약 불가 좌석 지정 (예시)
   final Set<String> unavailableSeats = {
     'A3', 'B7', 'C10', 'D15', 'E20', 'A25',
   };
@@ -30,7 +28,6 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
     passengerCount = widget.flight['passengerCount'] ?? 1;
     selectedSeats = [];
 
-    // 행과 열을 조합해 좌석 리스트 생성 (예: A1, B1, C1, ... E30)
     allSeats = [];
     for (int row = 1; row <= rowCount; row++) {
       for (final col in seatColumns) {
@@ -40,7 +37,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   }
 
   void _toggleSeat(String seat) {
-    if (unavailableSeats.contains(seat)) return; // 예약불가 좌석은 선택 불가
+    if (unavailableSeats.contains(seat)) return;
 
     setState(() {
       if (selectedSeats.contains(seat)) {
@@ -76,11 +73,11 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
 
   Color _getSeatColor(String seat) {
     if (unavailableSeats.contains(seat)) {
-      return Colors.grey; // 예약불가 회색
+      return Colors.grey;
     } else if (selectedSeats.contains(seat)) {
-      return Colors.purple; // 선택된 좌석 보라색
+      return const Color(0xFFA78BFA); // 💜 보라색 지정
     } else {
-      return Colors.green[300]!; // 선택 가능 좌석 연두색
+      return Colors.green[300]!;
     }
   }
 
@@ -90,6 +87,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       appBar: AppBar(
         title: const Text('좌석 선택'),
         centerTitle: true,
+        backgroundColor: const Color(0xFFA78BFA), // 💜 보라색 지정
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -101,7 +100,7 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5, // 열 개수
+                  crossAxisCount: 5,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                   childAspectRatio: 1.5,
@@ -143,10 +142,9 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed:
-                selectedSeats.length == passengerCount ? _goToPassengerInput : null,
+                onPressed: selectedSeats.length == passengerCount ? _goToPassengerInput : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
+                  backgroundColor: const Color(0xFFA78BFA), // 💜 보라색 버튼
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
