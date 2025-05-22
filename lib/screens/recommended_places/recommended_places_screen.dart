@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'place_detail_screen.dart';
-import 'recommended_place_model.dart';
+import '../../data/recommended_places/recommended_place_model.dart';
 
 class RecommendedPlacesScreen extends StatefulWidget {
   const RecommendedPlacesScreen({super.key});
@@ -16,6 +16,15 @@ class _RecommendedPlacesScreenState extends State<RecommendedPlacesScreen> {
   static const Color travelingPurple = Color(0xFFA78BFA);
 
   final List<String> filters = ['전체', '도쿄', '오사카', '후쿠오카', '로마', '파리'];
+  final Map<String, String> cityIdMap = {
+    '전체': 'all',
+    '도쿄': 'tokyo',
+    '오사카': 'osaka',
+    '후쿠오카': 'fukuoka',
+    '로마': 'rome',
+    '파리': 'paris',
+  };
+
   String selectedFilter = '전체';
   final TextEditingController searchController = TextEditingController();
 
@@ -32,7 +41,8 @@ class _RecommendedPlacesScreenState extends State<RecommendedPlacesScreen> {
   Future<void> _loadPlaces() async {
     setState(() => isLoading = true);
     try {
-      final result = await fetchRecommendedPlaces(selectedFilter == '전체' ? 'all' : selectedFilter);
+      final cityId = cityIdMap[selectedFilter] ?? 'all';
+      final result = await fetchRecommendedPlaces(cityId);
       setState(() {
         allPlaces = result;
         filteredPlaces = result;
@@ -58,6 +68,23 @@ class _RecommendedPlacesScreenState extends State<RecommendedPlacesScreen> {
       }).toList();
     });
   }
+
+  Future<List<RecommendedPlace>> fetchRecommendedPlaces(String cityId) async {
+    final uri = Uri.parse(
+        'http://10.0.2.2:8080/api/places/nearby?city=$cityId&cityId=$cityId'
+    );
+    print('🌐 호출 URL: $uri');
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+      return data.map((e) => RecommendedPlace.fromJson(e)).toList();
+    } else {
+      throw Exception('추천 명소 불러오기 실패');
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -153,46 +180,52 @@ class _RecommendedPlacesScreenState extends State<RecommendedPlacesScreen> {
                             const Icon(Icons.broken_image, size: 100),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(place.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                              Text(place.city, style: const TextStyle(fontSize: 12)),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const Icon(Icons.star, size: 14, color: Colors.orange),
-                                  const SizedBox(width: 4),
-                                  Text('${place.rating}', style: const TextStyle(fontSize: 12)),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: OutlinedButton(
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/place_detail',
-                                      arguments: {
-                                        'name': place.name,
-                                        'city': place.city,
-                                        'imageUrl': place.image,
-                                        'rating': place.rating,
-                                      },
-                                    );
-                                  },
-                                  child: const Text('상세보기', style: TextStyle(fontSize: 12)),
+                        Expanded( // 👈 핵심 포인트!
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(place.name,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                                Text(place.city,
+                                    style: const TextStyle(fontSize: 12),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.star, size: 14, color: Colors.orange),
+                                    const SizedBox(width: 4),
+                                    Text('${place.rating}', style: const TextStyle(fontSize: 12)),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                const Spacer(), // 👈 이걸로 아래로 밀어냄
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PlaceDetailScreen(place: place),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text('상세보기', style: TextStyle(fontSize: 12)),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                   );
+
+
                 },
               ),
             ),
@@ -200,17 +233,5 @@ class _RecommendedPlacesScreenState extends State<RecommendedPlacesScreen> {
         ],
       ),
     );
-  }
-
-  Future<List<RecommendedPlace>> fetchRecommendedPlaces(String cityId) async {
-    final uri = Uri.parse('http://10.0.2.2:8080/api/places/nearby?city=$cityId&cityId=$cityId');
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-      return data.map((e) => RecommendedPlace.fromJson(e)).toList();
-    } else {
-      throw Exception('추천 명소 불러오기 실패');
-    }
   }
 }

@@ -23,6 +23,8 @@ import 'package:mobile_app_function_impl/screens/travel_planner/step3_accommodat
 import 'package:mobile_app_function_impl/screens/travel_planner/step4_transportation_selection.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/step5_itinerary_generation.dart';
 
+import 'data/recommended_places/recommended_place_model.dart';
+
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
   late WidgetBuilder builder;
 
@@ -112,16 +114,10 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       break;
 
     case '/place_detail':
-      builder = (_) {
-        final args = settings.arguments as Map<String, dynamic>;
-        return PlaceDetailScreen(
-          name: args['name'],
-          city: args['city'],
-          imageUrl: args['imageUrl'],
-          rating: args['rating'],
-        );
-      };
+      final place = settings.arguments as RecommendedPlace;
+      builder = (_) => PlaceDetailScreen(place: place);
       break;
+
     default:
       builder = (_) => Scaffold(
         body: Center(
