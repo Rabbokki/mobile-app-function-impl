@@ -35,6 +35,11 @@ class TravelPlanProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setHotelsByDay(Map<int, String> hotelsByDay) {
+    dailyHotels = Map.from(hotelsByDay);
+    notifyListeners();
+  }
+
   void setHotel(int dayIndex, String hotelName) {
     dailyHotels[dayIndex] = hotelName;
     notifyListeners();

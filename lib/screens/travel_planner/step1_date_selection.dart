@@ -2,43 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../state/travel_plan_provider.dart';
 
-class Step1DateSelection extends StatefulWidget {
-  const Step1DateSelection({super.key});
+class DateSelectionScreen extends StatefulWidget {
+  final String city;
+
+  const DateSelectionScreen({
+    Key? key,
+    required this.city,
+  }) : super(key: key);
 
   @override
-  State<Step1DateSelection> createState() => _Step1DateSelectionState();
+  State<DateSelectionScreen> createState() => _DateSelectionScreenState();
 }
 
-class _Step1DateSelectionState extends State<Step1DateSelection> {
+class _DateSelectionScreenState extends State<DateSelectionScreen> {
   DateTime? startDate;
   DateTime? endDate;
-  String? selectedCity;
   static const Color travelingPurple = Color(0xFFA78BFA);
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null && args.containsKey('city')) {
-      selectedCity = args['city']; // OSAKA, PARIS 등
-    }
-  }
-
   Future<void> _selectDateRange() async {
-    final DateTimeRange? picked = await showDateRangePicker(
+    final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime(DateTime.now().year + 2),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: travelingPurple,
-            colorScheme: const ColorScheme.light(primary: travelingPurple),
-            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
-          ),
-          child: child!,
-        );
-      },
+      builder: (context, child) => Theme(
+        data: ThemeData.light().copyWith(
+          primaryColor: travelingPurple,
+          colorScheme: const ColorScheme.light(primary: travelingPurple),
+        ),
+        child: child!,
+      ),
     );
 
     if (picked != null) {
@@ -47,36 +39,32 @@ class _Step1DateSelectionState extends State<Step1DateSelection> {
         endDate = picked.end;
       });
 
-      // ✅ 날짜 Provider에 저장
-      final provider = context.read<TravelPlanProvider>();
-      provider.setDates(
-        picked.start.toString().split(' ')[0],
-        picked.end.toString().split(' ')[0],
+      context.read<TravelPlanProvider>().setDates(
+        picked.start.toIso8601String().split('T')[0],
+        picked.end.toIso8601String().split('T')[0],
       );
 
       final tripDays = picked.end.difference(picked.start).inDays + 1;
 
-      Future.microtask(() {
-        Navigator.pushNamed(
-          context,
-          '/step2',
-          arguments: {
-            'tripDays': tripDays,
-            'city': selectedCity,
-          },
-        );
-      });
+      Navigator.pushNamed(
+        context,
+        '/step2',
+        arguments: {
+          'tripDays': tripDays,
+          'city': widget.city,
+        },
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool canProceed = startDate != null && endDate != null;
+    final canProceed = startDate != null && endDate != null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text('날짜 선택'),
+        title: Text('${widget.city} 날짜 선택'),
         backgroundColor: travelingPurple,
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -86,7 +74,31 @@ class _Step1DateSelectionState extends State<Step1DateSelection> {
         child: Column(
           children: [
             const Spacer(flex: 2),
-            const Icon(Icons.calendar_today, size: 64, color: travelingPurple),
+            // 아이콘 컨테이너 + 중앙 보정
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.purple.withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    )
+                  ],
+                ),
+                child: Transform.translate(
+                  offset: const Offset(2, 0), // 👈 약간 오른쪽으로 밀기
+                  child: const Icon(
+                    Icons.calendar_month,
+                    size: 64,
+                    color: travelingPurple,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             const Text(
               '여행 날짜를 선택하세요',
@@ -94,7 +106,7 @@ class _Step1DateSelectionState extends State<Step1DateSelection> {
             ),
             const SizedBox(height: 12),
             const Text(
-              '출발일과 도착일을 선택하면\n일정 생성이 시작됩니다.',
+              '출발일과 도착일을 선택하면\n자동으로 다음 단계로 넘어갑니다.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: Colors.black54),
             ),
@@ -103,9 +115,8 @@ class _Step1DateSelectionState extends State<Step1DateSelection> {
               onPressed: _selectDateRange,
               style: ElevatedButton.styleFrom(
                 backgroundColor: travelingPurple,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 2,
               ),
               child: const Text('출발일 ~ 도착일 선택'),
             ),
@@ -116,19 +127,6 @@ class _Step1DateSelectionState extends State<Step1DateSelection> {
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
             const Spacer(flex: 3),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: travelingPurple,
-                  disabledBackgroundColor: Colors.grey[300],
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text('다음 단계로'),
-              ),
-            ),
           ],
         ),
       ),

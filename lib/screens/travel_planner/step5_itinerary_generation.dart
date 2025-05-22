@@ -10,7 +10,7 @@ class Step5ItineraryGeneration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final plan = context.read<TravelPlanProvider>();
+    final plan = context.watch<TravelPlanProvider>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -31,35 +31,60 @@ class Step5ItineraryGeneration extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
-                children: plan.dailyPlaces.entries.map((entry) {
-                  final day = entry.key + 1;
-                  final places = entry.value;
-                  return Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
+                children: [
+                  ...plan.dailyPlaces.entries.map((entry) {
+                    final day = entry.key;
+                    final places = entry.value;
+                    final hotel = plan.dailyHotels[day];
+
+                    return Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      color: Colors.purple[50],
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${day + 1}일차',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ...places.map((place) => Padding(
+                              padding: const EdgeInsets.only(left: 8, bottom: 4),
+                              child: Text('• $place'),
+                            )),
+                            if (hotel != null) ...[
+                              const SizedBox(height: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Text('🏨 숙소: $hotel'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  if (plan.transportation.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '$day일차',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                          const Text('🚗 교통편: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Expanded(
+                            child: Text(plan.transportation),
                           ),
-                          const SizedBox(height: 8),
-                          ...places.map((place) => Padding(
-                            padding: const EdgeInsets.only(left: 8, bottom: 4),
-                            child: Text('• $place'),
-                          )),
                         ],
                       ),
                     ),
-                  );
-                }).toList(),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -73,8 +98,7 @@ class Step5ItineraryGeneration extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
-                  // 임시로 마이페이지 이동만 처리
-                  Navigator.pushNamed(
+                  Navigator.popAndPushNamed(
                     context,
                     '/mypage',
                     arguments: {
@@ -83,6 +107,8 @@ class Step5ItineraryGeneration extends StatelessWidget {
                         'startDate': plan.startDate,
                         'endDate': plan.endDate,
                         'itinerary': plan.dailyPlaces.map((key, value) => MapEntry('${key + 1}일차', value)),
+                        'hotels': plan.dailyHotels.map((key, value) => MapEntry('${key + 1}일차', value)),
+                        'transportation': plan.transportation,
                         'image': _getCityImage(city),
                       }
                     },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../state/travel_plan_provider.dart';
+import '../../data/dummy_data/dummyAttractions.dart';
 
 class Step2AttractionSelection extends StatefulWidget {
   final int tripDays;
@@ -21,27 +22,8 @@ class _Step2AttractionSelectionState extends State<Step2AttractionSelection> {
   int selectedDayIndex = 0;
   Map<int, List<String>> _selectedPlacesByDay = {};
 
-  List<Map<String, String>> _getPlacesByCity(String city) {
-    switch (city.toUpperCase()) {
-      case 'TOKYO':
-        return [
-          {'name': '도쿄 타워', 'image': 'assets/images/tokyo-night-lights.png'},
-          {'name': '시부야 스크램블', 'image': 'assets/images/shibuya-intersection-bustle.png'},
-        ];
-      case 'PARIS':
-        return [
-          {'name': '에펠탑', 'image': 'assets/images/eiffel_tower.png'},
-          {'name': '루브르 박물관', 'image': 'assets/images/louvre.jpg'},
-          {'name': '샹젤리제 거리', 'image': 'assets/images/champs.jpg'},
-          {'name': '몽마르뜨 언덕', 'image': 'assets/images/montmartre.jpg'},
-        ];
-      default:
-        return [
-          {'name': '도톤보리', 'image': 'assets/images/dotonbori.png'},
-          {'name': '오사카 성', 'image': 'assets/images/osaka-castle.png'},
-          {'name': '유니버설 스튜디오', 'image': 'assets/images/universal-studios.png'},
-        ];
-    }
+  List<Map<String, dynamic>> _getPlacesByCity(String city) {
+    return dummyAttractions[city.toLowerCase()] ?? [];
   }
 
   void _togglePlace(String place) {

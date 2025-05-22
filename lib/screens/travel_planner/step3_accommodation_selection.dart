@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../state/travel_plan_provider.dart';
+import '../../data/dummy_data/dummyHotels.dart';
 
 class Step3AccommodationSelection extends StatefulWidget {
   final int tripDays;
@@ -21,29 +22,14 @@ class _Step3AccommodationSelectionState extends State<Step3AccommodationSelectio
   int selectedDayIndex = 0;
   Map<int, String> selectedHotels = {};
 
-  final List<Map<String, dynamic>> hotels = [
-    {
-      'name': '호텔 오사카 베이타워',
-      'location': '오사카항 근처',
-      'price': 120000,
-      'image': 'assets/images/hotel1.jpg',
-    },
-    {
-      'name': '호텔 파리 라파예트',
-      'location': '루브르 박물관 근처',
-      'price': 200000,
-      'image': 'assets/images/hotel2.jpg',
-    },
-    {
-      'name': '도쿄 시티 호텔',
-      'location': '시부야 근처',
-      'price': 150000,
-      'image': 'assets/images/hotel3.jpg',
-    },
-  ];
+  List<Map<String, dynamic>> _getHotelsByCity(String city) {
+    return dummyHotels[city.toLowerCase()] ?? [];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hotels = _getHotelsByCity(widget.city);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
@@ -109,34 +95,26 @@ class _Step3AccommodationSelectionState extends State<Step3AccommodationSelectio
                         ),
                       ),
                       title: Text(hotel['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(hotel['location']),
-                          const SizedBox(height: 4),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                selectedHotels[selectedDayIndex] = hotel['name'];
-                              });
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: isSelected ? travelingPurple : Colors.grey,
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(64, 28),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              isSelected ? '선택됨' : '선택하기',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isSelected ? travelingPurple : Colors.black,
-                              ),
-                            ),
+                      subtitle: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            selectedHotels[selectedDayIndex] = hotel['name'];
+                          });
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: isSelected ? travelingPurple : Colors.grey,
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(64, 28),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          isSelected ? '선택됨' : '선택하기',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isSelected ? travelingPurple : Colors.black,
                           ),
-                        ],
+                        ),
                       ),
-                      trailing: Text('₩${hotel['price'].toString()}/박'),
                     ),
                   );
                 },
@@ -150,6 +128,9 @@ class _Step3AccommodationSelectionState extends State<Step3AccommodationSelectio
                     onPressed: () {
                       if (selectedHotels.containsKey(selectedDayIndex)) {
                         final hotelName = selectedHotels[selectedDayIndex]!;
+                        for (int i = 0; i < widget.tripDays; i++) {
+                          selectedHotels[i] = hotelName;
+                        }
                         context.read<TravelPlanProvider>().applyHotelToAll(hotelName, widget.tripDays);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('모든 날짜에 숙소 적용 완료')),
@@ -168,7 +149,7 @@ class _Step3AccommodationSelectionState extends State<Step3AccommodationSelectio
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      context.read<TravelPlanProvider>().dailyHotels.addAll(selectedHotels);
+                      context.read<TravelPlanProvider>().setHotelsByDay(selectedHotels);
                       Navigator.pushNamed(
                         context,
                         '/step4',

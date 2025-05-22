@@ -4,7 +4,9 @@ class TripDetailScreen extends StatelessWidget {
   final String city;
   final String startDate;
   final String endDate;
-  final Map<String, dynamic>? itinerary; //  일정 데이터
+  final Map<String, dynamic>? itinerary; // 일정 데이터
+  final Map<String, dynamic>? hotels; // 숙소 정보
+  final String? transportation; // 교통편
 
   const TripDetailScreen({
     super.key,
@@ -12,6 +14,8 @@ class TripDetailScreen extends StatelessWidget {
     required this.startDate,
     required this.endDate,
     this.itinerary,
+    this.hotels,
+    this.transportation,
   });
 
   @override
@@ -44,7 +48,8 @@ class TripDetailScreen extends StatelessWidget {
             if (itinerary != null)
               ...itinerary!.entries.map((entry) {
                 final day = entry.key;
-                final activities = List<String>.from(entry.value); // 안전하게 캐스팅
+                final activities = List<String>.from(entry.value);
+                final hotelInfo = hotels != null ? hotels![day] : null;
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 6),
@@ -56,6 +61,10 @@ class TripDetailScreen extends StatelessWidget {
                         Text(day, style: const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         ...activities.map((activity) => Text('- $activity')).toList(),
+                        if (hotelInfo != null) ...[
+                          const SizedBox(height: 6),
+                          Text('🏨 숙소: $hotelInfo'),
+                        ],
                       ],
                     ),
                   ),
@@ -63,6 +72,16 @@ class TripDetailScreen extends StatelessWidget {
               }).toList()
             else
               const Text('저장된 일정이 없습니다.'),
+
+            if (transportation != null && transportation!.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Text(
+                '🚗 교통편',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(transportation!),
+            ],
           ],
         ),
       ),
