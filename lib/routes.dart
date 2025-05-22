@@ -13,6 +13,7 @@ import 'package:mobile_app_function_impl/screens/community/community_home.dart';
 import 'package:mobile_app_function_impl/screens/community/post_detail.dart';
 import 'package:mobile_app_function_impl/screens/community/write_post.dart';
 import 'package:mobile_app_function_impl/screens/mypage/mypage_screen.dart';
+import 'package:mobile_app_function_impl/screens/mypage/settings_screen.dart';
 import 'package:mobile_app_function_impl/screens/mypage/trip_detail.dart';
 import 'package:mobile_app_function_impl/screens/auth/login_screen.dart';
 import 'package:mobile_app_function_impl/screens/auth/signup_screen.dart';
@@ -66,6 +67,9 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       break;
     case '/mypage':
       builder = (_) => const MyPageScreen();
+      break;
+    case '/settings':
+      builder = (_) => const SettingsScreen();
       break;
     case '/login':
       builder = (_) => const LoginScreen();
