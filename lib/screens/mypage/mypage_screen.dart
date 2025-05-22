@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/reservation/reservation_service.dart';
+import '../../widgets/profile_header_widget.dart';
 import 'trip_detail.dart'; // 내 여행 일정 상세보기
 
 class MyPageScreen extends StatefulWidget {
@@ -217,13 +218,28 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       backgroundColor: const Color(0xFFF9FAFB),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-        controller: _tabController,
+          : Column(
         children: [
-          _buildMyTripsTab(),
-          _buildReservationTab(),
-          _buildSavedTab(),
-          _buildReviewTab(),
+          ProfileHeaderWidget(
+            nickname: myInfo!['nickname'],
+            email:    myInfo!['email'],
+            imgUrl:   myInfo!['imgUrl'],
+            level:    myInfo!['level'],
+            levelExp: myInfo!['levelExp'],
+          ),
+
+          // Then the tab pages
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildMyTripsTab(),       // Now without the header inside
+                _buildReservationTab(),
+                _buildSavedTab(),
+                _buildReviewTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -232,7 +248,6 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   Widget _buildMyTripsTab() {
     return Column(
       children: [
-        _buildProfileHeader(),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16.0),

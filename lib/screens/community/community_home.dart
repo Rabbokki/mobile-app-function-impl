@@ -9,7 +9,8 @@ class CommunityHomeScreen extends StatefulWidget {
   State<CommunityHomeScreen> createState() => _CommunityHomeState();
 }
 
-class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerProviderStateMixin {
+class _CommunityHomeState extends State<CommunityHomeScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
@@ -21,8 +22,12 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
   String currentCategory = '';
   String currentSearch = '';
 
+  // Pagination
+  int currentPage = 0;
+  static const int pageSize = 10;
+
   // Map tab label to backend category
-  Map<String, String?> categoryMap = {
+  final Map<String, String?> categoryMap = {
     '전체 보기': null,
     '꿀팁 게시판': 'TIPS',
     '자유게시판': 'FREE',
@@ -32,8 +37,8 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: tabs.length, vsync: this);
-    _tabController.addListener(_handleTabChange);
+    _tabController = TabController(length: tabs.length, vsync: this)
+      ..addListener(_handleTabChange);
     _fetchPosts();
   }
 
@@ -48,6 +53,7 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
     if (_tabController.indexIsChanging) return;
     setState(() {
       currentCategory = categoryMap[tabs[_tabController.index]] ?? '';
+      currentPage = 0;
       _fetchPosts();
     });
   }
@@ -55,10 +61,10 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
   Future<void> _fetchPosts() async {
     setState(() {
       isLoading = true;
+      currentPage = 0;
     });
 
     try {
-      // Build URL with query params
       final queryParameters = <String, String>{};
       if (currentCategory.isNotEmpty) {
         queryParameters['category'] = currentCategory;
@@ -76,13 +82,16 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        // Sort posts by createdAt descending (newest first)
+        final List<dynamic> data =
+        json.decode(utf8.decode(response.bodyBytes));
+
+        // Sort by createdAt descending
         data.sort((a, b) {
           final dateA = DateTime.parse(a['createdAt'] ?? '');
           final dateB = DateTime.parse(b['createdAt'] ?? '');
-          return dateB.compareTo(dateA); // descending order
+          return dateB.compareTo(dateA);
         });
+
         setState(() {
           posts = data.map((e) => e as Map<String, dynamic>).toList();
         });
@@ -101,6 +110,7 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
   void _onSearch() {
     setState(() {
       currentSearch = _searchController.text.trim();
+      currentPage = 0;
       _fetchPosts();
     });
   }
@@ -109,13 +119,25 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
     final result = await Navigator.pushNamed(context, '/write_post');
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
-        posts.insert(0, result); // Add new post on top locally
+        // Insert the newly written post at the top of the list
+        posts.insert(0, result);
+        currentPage = 0;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Compute the subset of posts to display for current page
+    final startIndex = currentPage * pageSize;
+    final endIndex = (startIndex + pageSize).clamp(0, posts.length);
+    final pagedPosts = posts.isEmpty
+        ? <Map<String, dynamic>>[]
+        : posts.sublist(startIndex, endIndex);
+
+    final bool hasPrev = currentPage > 0;
+    final bool hasNext = endIndex < posts.length;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
@@ -127,7 +149,7 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
           IconButton(
             icon: const Icon(Icons.edit_note),
             onPressed: _onWritePost,
-          )
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -139,6 +161,7 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
       ),
       body: Column(
         children: [
+          // Search bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -156,8 +179,9 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
                     onChanged: (value) {
                       setState(() {
                         currentSearch = value;
+                        currentPage = 0;
                       });
-                      _fetchPosts(); // Live search
+                      _fetchPosts(); // Live search as text changes
                     },
                     onSubmitted: (_) => _onSearch(),
                   ),
@@ -166,49 +190,106 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
             ),
           ),
 
+          // Post list
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: posts.length,
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: pagedPosts.length,
               itemBuilder: (context, index) {
-                final post = posts[index];
+                final post = pagedPosts[index];
+                final String title = post['title'] ?? '';
+                final String author = post['userName'] ?? '익명';
+                final int likeCount = post['likeCount'] as int? ?? 0;
+                final int viewCount = post['views'] as int? ?? 0;
+                final int commentCount =
+                    post['commentsCount'] as int? ?? 0;
+
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   elevation: 1,
                   child: ListTile(
-                    title: Text(post['title'] ?? ''),
-                    subtitle: Text('작성자: ${post['userName'] ?? '익명'}'),
+                    title: Text(title),
+                    subtitle: Text('작성자: $author'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Views
+                        const Icon(
+                          Icons.remove_red_eye,
+                          size: 20,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$viewCount',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Comments
+                        const Icon(
+                          Icons.chat_bubble_outline,
+                          size: 20,
+                          color: Colors.blueGrey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$commentCount',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Likes (unfilled outline)
+                        const Icon(
+                          Icons.favorite_border,
+                          size: 20,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$likeCount',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
                     onTap: () async {
                       try {
-                        final response = await http.get(
-                          Uri.parse("http://10.0.2.2:8080/api/posts/find/${post['id']}"),
+                        final detailResponse = await http.get(
+                          Uri.parse(
+                            'http://10.0.2.2:8080/api/posts/find/${post['id']}',
+                          ),
                         );
 
-                        if (response.statusCode == 200) {
-                          final postDetail = json.decode(utf8.decode(response.bodyBytes));
+                        if (detailResponse.statusCode == 200) {
+                          final Map<String, dynamic> postDetail =
+                          json.decode(
+                              utf8.decode(detailResponse.bodyBytes));
 
-                          if (context.mounted) {
-                            final result = await Navigator.pushNamed(
-                              context,
-                              '/post_detail',
-                              arguments: postDetail,
-                            );
+                          if (!mounted) return;
+                          final result = await Navigator.pushNamed(
+                            context,
+                            '/post_detail',
+                            arguments: postDetail,
+                          );
 
-                            if (result == true) {
-                              _fetchPosts();
-                            }
+                          if (result == true) {
+                            _fetchPosts();
                           }
                         } else {
-                          throw Exception('상태 코드: ${response.statusCode}');
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('게시글 불러오기 실패: $e')),
+                          throw Exception(
+                            '상태 코드: ${detailResponse.statusCode}',
                           );
                         }
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('게시글 불러오기 실패: $e'),
+                          ),
+                        );
                       }
                     },
                   ),
@@ -216,6 +297,44 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
               },
             ),
           ),
+
+          // Pagination controls
+          if (!isLoading && posts.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: hasPrev
+                        ? () {
+                      setState(() {
+                        currentPage -= 1;
+                      });
+                    }
+                        : null,
+                    child: const Text('이전'),
+                  ),
+                  const SizedBox(width: 16),
+                  Text(
+                    '페이지 ${currentPage + 1} / '
+                        '${(posts.length / pageSize).ceil()}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: hasNext
+                        ? () {
+                      setState(() {
+                        currentPage += 1;
+                      });
+                    }
+                        : null,
+                    child: const Text('다음'),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
