@@ -15,7 +15,9 @@ class FlightDetailScreen extends StatelessWidget {
     final int passengerCount = flight['passengerCount'] ?? 1;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('항공편 상세 정보')),
+      appBar: AppBar(
+        title: const Text('항공편 상세 정보'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -23,16 +25,27 @@ class FlightDetailScreen extends StatelessWidget {
           children: [
             Text(
               '${flight['airline']} (${flight['flightNumber']})',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-            Text('출발지: ${flight['departureAirport']}'),
-            Text('도착지: ${flight['arrivalAirport']}'),
-            Text('출발 시간: ${flight['departureTime']}'),
-            Text('도착 시간: ${flight['arrivalTime']}'),
+            Text('출발지: ${flight['departureAirport']}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text('도착지: ${flight['arrivalAirport']}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text('출발 시간: ${flight['departureTime']}',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text('도착 시간: ${flight['arrivalTime']}',
+                style: Theme.of(context).textTheme.bodyMedium),
             const Divider(height: 32),
-            Text('👥 탑승객 수: $passengerCount명'),
-            Text('💰 총 가격: ${NumberFormat('#,###').format(price * passengerCount)} ${flight['currency']}'),
+            Text('👥 탑승객 수: $passengerCount명',
+                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              '💰 총 가격: ${NumberFormat('#,###').format(price * passengerCount)} ${flight['currency']}',
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
             const Spacer(),
             SizedBox(
               width: double.infinity,
@@ -44,6 +57,12 @@ class FlightDetailScreen extends StatelessWidget {
                     arguments: flight,
                   );
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontSize: 16),
+                ),
                 child: const Text('다음: 좌석 선택'),
               ),
             )
