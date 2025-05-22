@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app_function_impl/data/saved_trips.dart';
+import 'package:provider/provider.dart';
+import '../../state/travel_plan_provider.dart';
 
 class Step5ItineraryGeneration extends StatelessWidget {
-  const Step5ItineraryGeneration({super.key});
+  final String city;
+  const Step5ItineraryGeneration({super.key, required this.city});
 
   static const Color travelingPurple = Color(0xFFA78BFA);
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, List<String>> itinerary = {
-      '1일차': ['도톤보리 방문', '호텔 체크인'],
-      '2일차': ['오사카성 관광', '유니버설 스튜디오'],
-      '3일차': ['쇼핑 및 귀국'],
-    };
+    final plan = context.read<TravelPlanProvider>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text('여행 일정 요약'),
+        title: Text('$city 일정 요약'),
         backgroundColor: travelingPurple,
         foregroundColor: Colors.white,
         centerTitle: true,
@@ -33,7 +31,9 @@ class Step5ItineraryGeneration extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
-                children: itinerary.entries.map((entry) {
+                children: plan.dailyPlaces.entries.map((entry) {
+                  final day = entry.key + 1;
+                  final places = entry.value;
                   return Card(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
@@ -44,14 +44,14 @@ class Step5ItineraryGeneration extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            entry.key,
+                            '$day일차',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...entry.value.map((place) => Padding(
+                          ...places.map((place) => Padding(
                             padding: const EdgeInsets.only(left: 8, bottom: 4),
                             child: Text('• $place'),
                           )),
@@ -73,20 +73,20 @@ class Step5ItineraryGeneration extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
-                  final newTrip = {
-                    'city': '도쿄',
-                    'startDate': '2025-06-01',
-                    'endDate': '2025-06-04',
-                    'itinerary': itinerary,
-                  };
-
-                  savedTrips.add(newTrip);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('일정이 저장되었습니다!')),
+                  // 임시로 마이페이지 이동만 처리
+                  Navigator.pushNamed(
+                    context,
+                    '/mypage',
+                    arguments: {
+                      'newTrip': {
+                        'city': city,
+                        'startDate': plan.startDate,
+                        'endDate': plan.endDate,
+                        'itinerary': plan.dailyPlaces.map((key, value) => MapEntry('${key + 1}일차', value)),
+                        'image': _getCityImage(city),
+                      }
+                    },
                   );
-
-                  Navigator.pushNamed(context, '/mypage');
                 },
                 child: const Text('여행 일정 저장하기'),
               ),
@@ -95,5 +95,28 @@ class Step5ItineraryGeneration extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getCityImage(String city) {
+    switch (city.toUpperCase()) {
+      case 'OSAKA':
+        return 'assets/images/osaka.jpg';
+      case 'TOKYO':
+        return 'assets/images/tokyo.png';
+      case 'PARIS':
+        return 'assets/images/paris.png';
+      case 'ROME':
+        return 'assets/images/rome.png';
+      case 'VENICE':
+        return 'assets/images/venice.png';
+      case 'FUKUOKA':
+        return 'assets/images/fukuoka.png';
+      case 'BANGKOK':
+        return 'assets/images/bangkok.png';
+      case 'SINGAPORE':
+        return 'assets/images/singapore.png';
+      default:
+        return 'assets/images/default_city.jpg';
+    }
   }
 }

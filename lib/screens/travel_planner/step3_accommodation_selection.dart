@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../state/travel_plan_provider.dart';
 
 class Step3AccommodationSelection extends StatefulWidget {
   final int tripDays;
-  const Step3AccommodationSelection({super.key, required this.tripDays});
+  final String city;
+
+  const Step3AccommodationSelection({
+    super.key,
+    required this.tripDays,
+    required this.city,
+  });
 
   @override
   State<Step3AccommodationSelection> createState() => _Step3AccommodationSelectionState();
@@ -10,14 +18,28 @@ class Step3AccommodationSelection extends StatefulWidget {
 
 class _Step3AccommodationSelectionState extends State<Step3AccommodationSelection> {
   static const Color travelingPurple = Color(0xFFA78BFA);
-
   int selectedDayIndex = 0;
-  String? selectedHotelName;
+  Map<int, String> selectedHotels = {};
 
-  final List<Map<String, String>> hotels = [
-    {'name': '오사카 호텔 1', 'location': '도톤보리 근처', 'price': '₩120,000/박'},
-    {'name': '오사카 호텔 2', 'location': '오사카성 주변', 'price': '₩100,000/박'},
-    {'name': '오사카 호텔 3', 'location': '유니버설 스튜디오 근처', 'price': '₩140,000/박'},
+  final List<Map<String, dynamic>> hotels = [
+    {
+      'name': '호텔 오사카 베이타워',
+      'location': '오사카항 근처',
+      'price': 120000,
+      'image': 'assets/images/hotel1.jpg',
+    },
+    {
+      'name': '호텔 파리 라파예트',
+      'location': '루브르 박물관 근처',
+      'price': 200000,
+      'image': 'assets/images/hotel2.jpg',
+    },
+    {
+      'name': '도쿄 시티 호텔',
+      'location': '시부야 근처',
+      'price': 150000,
+      'image': 'assets/images/hotel3.jpg',
+    },
   ];
 
   @override
@@ -31,105 +53,137 @@ class _Step3AccommodationSelectionState extends State<Step3AccommodationSelectio
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '원하는 숙소를 선택하세요.',
+              '여행 일자별 숙소를 선택해주세요.',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
-
-            Row(
-              children: List.generate(widget.tripDays, (index) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text('${index + 1}일차'),
-                    selected: selectedDayIndex == index,
-                    selectedColor: travelingPurple,
-                    onSelected: (_) {
-                      setState(() {
-                        selectedDayIndex = index;
-                      });
-                    },
-                    labelStyle: TextStyle(
-                      color: selectedDayIndex == index ? Colors.white : Colors.black,
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(widget.tripDays, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text('${index + 1}일차'),
+                      selected: selectedDayIndex == index,
+                      selectedColor: travelingPurple,
+                      onSelected: (_) {
+                        setState(() {
+                          selectedDayIndex = index;
+                        });
+                      },
+                      labelStyle: TextStyle(
+                        color: selectedDayIndex == index ? Colors.white : Colors.black,
+                      ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                }),
+              ),
             ),
-
-            const SizedBox(height: 16),
-
+            const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
                 itemCount: hotels.length,
                 itemBuilder: (context, index) {
                   final hotel = hotels[index];
+                  final isSelected = selectedHotels[selectedDayIndex] == hotel['name'];
+
                   return Card(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 2,
                     margin: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     child: ListTile(
-                      title: Text(
-                        hotel['name']!,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      contentPadding: const EdgeInsets.all(12),
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          hotel['image'],
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                        ),
                       ),
-                      subtitle: Text(hotel['location']!),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      title: Text(hotel['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(hotel['price']!, style: const TextStyle(color: Colors.black87)),
-                          const SizedBox(height: 6),
+                          Text(hotel['location']),
+                          const SizedBox(height: 4),
                           TextButton(
                             onPressed: () {
                               setState(() {
-                                selectedHotelName = hotel['name'];
+                                selectedHotels[selectedDayIndex] = hotel['name'];
                               });
                             },
-                            style: TextButton.styleFrom(foregroundColor: travelingPurple),
-                            child: const Text('선택'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: isSelected ? travelingPurple : Colors.grey,
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(64, 28),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              isSelected ? '선택됨' : '선택하기',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isSelected ? travelingPurple : Colors.black,
+                              ),
+                            ),
                           ),
                         ],
                       ),
+                      trailing: Text('₩${hotel['price'].toString()}/박'),
                     ),
                   );
                 },
               ),
             ),
-
-            if (selectedHotelName != null) ...[
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (selectedHotels.containsKey(selectedDayIndex)) {
+                        final hotelName = selectedHotels[selectedDayIndex]!;
+                        context.read<TravelPlanProvider>().applyHotelToAll(hotelName, widget.tripDays);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('모든 날짜에 숙소 적용 완료')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: travelingPurple,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('모든 날짜에 적용'),
+                  ),
                 ),
-                child: Text('🗺️ "$selectedHotelName" 위치 지도 미리보기 (추후 Google Map 연결)'),
-              ),
-            ],
-
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: travelingPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      context.read<TravelPlanProvider>().dailyHotels.addAll(selectedHotels);
+                      Navigator.pushNamed(
+                        context,
+                        '/step4',
+                        arguments: {'city': widget.city},
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: travelingPurple,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('다음 단계로'),
+                  ),
                 ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/step4');
-                },
-                child: const Text('다음 단계로'),
-              ),
+              ],
             ),
           ],
         ),

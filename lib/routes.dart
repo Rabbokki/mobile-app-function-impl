@@ -28,79 +28,85 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
 
   switch (settings.name) {
     case '/':
-      builder = (BuildContext _) => const HomeScreen();
+      builder = (_) => const HomeScreen();
       break;
     case '/flight':
-      builder = (BuildContext _) => const SearchScreen();
+      builder = (_) => const SearchScreen();
       break;
     case '/flight_detail':
-      builder = (BuildContext context) => const FlightDetailScreen();
+      builder = (_) => const FlightDetailScreen();
       break;
     case '/seat-selection':
       final flight = settings.arguments as Map<String, dynamic>;
-      builder = (BuildContext context) => SeatSelectionScreen(flight: flight);
+      builder = (_) => SeatSelectionScreen(flight: flight);
       break;
-
     case '/passenger_info':
-      builder = (BuildContext context) => const PassengerInfoScreen();
+      builder = (_) => const PassengerInfoScreen();
       break;
     case '/payment':
       final flightWithPassenger = settings.arguments as Map<String, dynamic>;
-      builder = (BuildContext context) => PaymentScreen(flightWithPassenger: flightWithPassenger);
+      builder = (_) => PaymentScreen(flightWithPassenger: flightWithPassenger);
       break;
     case '/make_trip':
-      builder = (BuildContext _) => const MakeTripScreen();
+      builder = (_) => const MakeTripScreen();
       break;
     case '/recommended':
-      builder = (BuildContext _) => const RecommendedPlacesScreen();
+      builder = (_) => const RecommendedPlacesScreen();
       break;
     case '/community':
-      builder = (BuildContext _) => const CommunityHomeScreen();
+      builder = (_) => const CommunityHomeScreen();
       break;
     case '/post_detail':
       final post = settings.arguments as Map<String, dynamic>;
       builder = (_) => PostDetailScreen(post: post);
       break;
     case '/write_post':
-      final args = settings.arguments as Map<String, dynamic>?; // safely cast
-      builder = (BuildContext _) => WritePostScreen(postData: args);
+      final args = settings.arguments as Map<String, dynamic>?;
+      builder = (_) => WritePostScreen(postData: args);
       break;
     case '/mypage':
-      builder = (BuildContext _) => const MyPageScreen();
+      builder = (_) => const MyPageScreen();
       break;
     case '/login':
-      builder = (BuildContext _) => const LoginScreen();
+      builder = (_) => const LoginScreen();
       break;
     case '/signup':
-      builder = (BuildContext _) => const SignupScreen();
+      builder = (_) => const SignupScreen();
       break;
     case '/ai_itinerary':
-      builder = (BuildContext _) => const AiItineraryScreen();
+      builder = (_) => const AiItineraryScreen();
       break;
     case '/step1':
-      builder = (BuildContext _) => const Step1DateSelection();
+      builder = (_) => const Step1DateSelection();
       break;
-    case '/step2':
-      builder = (BuildContext _) => Step2AttractionSelection(tripDays: 3);
+    case '/step2': {
+      final step2Args = settings.arguments as Map<String, dynamic>;
+      builder = (_) => Step2AttractionSelection(
+        tripDays: step2Args['tripDays'],
+        city: step2Args['city'],
+      );
       break;
-
-
-    case '/step3':
-      builder = (BuildContext context) {
-        final tripDays = settings.arguments as int;
-        return Step3AccommodationSelection(tripDays: tripDays);
-      };
+    }
+    case '/step3': {
+      final step3Args = settings.arguments as Map<String, dynamic>;
+      builder = (_) => Step3AccommodationSelection(
+        tripDays: step3Args['tripDays'],
+        city: step3Args['city'],
+      );
       break;
-
-
+    }
     case '/step4':
-      builder = (BuildContext _) => const Step4TransportationSelection();
+      final step4Args = settings.arguments as Map<String, dynamic>;
+      builder = (_) => Step4TransportationSelection(city: step4Args['city']);
       break;
+
     case '/step5':
-      builder = (BuildContext _) => const Step5ItineraryGeneration();
+      final step5Args = settings.arguments as Map<String, dynamic>?;
+      builder = (_) => Step5ItineraryGeneration(city: step5Args?['city']);
       break;
+
     case '/place_detail':
-      builder = (BuildContext context) {
+      builder = (_) {
         final args = settings.arguments as Map<String, dynamic>;
         return PlaceDetailScreen(
           name: args['name'],
@@ -111,7 +117,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       };
       break;
     default:
-      builder = (BuildContext _) => Scaffold(
+      builder = (_) => Scaffold(
         body: Center(
           child: Text('No route defined for ${settings.name}'),
         ),
@@ -121,10 +127,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
   return PageRouteBuilder(
     pageBuilder: (context, animation, secondaryAnimation) => builder(context),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: animation,
-        child: child,
-      );
+      return FadeTransition(opacity: animation, child: child);
     },
     transitionDuration: const Duration(milliseconds: 300),
     settings: settings,

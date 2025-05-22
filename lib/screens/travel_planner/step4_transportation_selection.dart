@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../state/travel_plan_provider.dart';
 
 class Step4TransportationSelection extends StatefulWidget {
-  const Step4TransportationSelection({super.key});
+  final String city;
+  const Step4TransportationSelection({super.key, required this.city});
 
   @override
   State<Step4TransportationSelection> createState() => _Step4TransportationSelectionState();
 }
 
 class _Step4TransportationSelectionState extends State<Step4TransportationSelection> {
-  String? selected;
-
   static const Color travelingPurple = Color(0xFFA78BFA);
+  String? selectedMethod;
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +41,14 @@ class _Step4TransportationSelectionState extends State<Step4TransportationSelect
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: selected != null
+                onPressed: selectedMethod != null
                     ? () {
-                  Navigator.pushNamed(context, '/step5');
+                  context.read<TravelPlanProvider>().setTransportation(selectedMethod!);
+                  Navigator.pushNamed(
+                    context,
+                    '/step5',
+                    arguments: {'city': widget.city},
+                  );
                 }
                     : null,
                 style: ElevatedButton.styleFrom(
@@ -60,7 +67,7 @@ class _Step4TransportationSelectionState extends State<Step4TransportationSelect
   }
 
   Widget _buildOptionButton(String label, IconData icon) {
-    final isSelected = selected == label;
+    final isSelected = selectedMethod == label;
 
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
@@ -72,7 +79,7 @@ class _Step4TransportationSelectionState extends State<Step4TransportationSelect
       ),
       onPressed: () {
         setState(() {
-          selected = label;
+          selectedMethod = label;
         });
       },
       icon: Icon(icon),

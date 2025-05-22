@@ -43,20 +43,26 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     },
   ];
 
-  final List<Map<String, dynamic>> savedTrips = [
-    {
-      'city': '도쿄',
-      'startDate': '2025-06-01',
-      'endDate': '2025-06-10',
-      'itinerary': '도쿄 여행 일정 상세 내용',
-    },
-    {
-      'city': '파리',
-      'startDate': '2025-07-15',
-      'endDate': '2025-07-25',
-      'itinerary': '파리 여행 일정 상세 내용',
-    },
-  ];
+  List<Map<String, dynamic>> savedTrips = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    if (args != null && args.containsKey('newTrip')) {
+      final newTrip = args['newTrip'] as Map<String, dynamic>;
+
+      if (!savedTrips.any((trip) =>
+      trip['city'] == newTrip['city'] &&
+          trip['startDate'] == newTrip['startDate'])) {
+        setState(() {
+          savedTrips.add(newTrip);
+        });
+      }
+    }
+  }
+
 
 
   static const Color travelingPurple = Color(0xFFA78BFA); // 회원가입 기준 색상
@@ -258,44 +264,71 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 ),
 
                 ...savedTrips.map((trip) => Container(
-                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.map, size: 30, color: travelingPurple),
-                      SizedBox(height: 8),
-                      Text(trip['city'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('${trip['startDate']} ~ ${trip['endDate']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      const Spacer(),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => TripDetailScreen(
-                                  city: trip['city'],
-                                  startDate: trip['startDate'],
-                                  endDate: trip['endDate'],
-                                  itinerary: trip['itinerary'],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      children: [
+                        Image.asset(
+                          trip['image'] ?? 'assets/images/default_city.jpg',
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.black.withOpacity(0.5), Colors.transparent],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.map, size: 30, color: Colors.white),
+                              const SizedBox(height: 8),
+                              Text(trip['city'] ?? '',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                              const SizedBox(height: 4),
+                              Text('${trip['startDate']} ~ ${trip['endDate']}',
+                                  style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                              const Spacer(),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TripDetailScreen(
+                                          city: trip['city'],
+                                          startDate: trip['startDate'],
+                                          endDate: trip['endDate'],
+                                          itinerary: trip['itinerary'],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(backgroundColor: travelingPurple),
+                                  child: const Text('일정 보기', style: TextStyle(color: Colors.white)),
                                 ),
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(backgroundColor: travelingPurple),
-                          child: const Text('일정 보기', style: TextStyle(color: Colors.white)),
+                            ],
+                          ),
                         ),
-                      )
-                    ],
+                      ],
+                    ),
                   ),
                 ))
+
+
               ],
             ),
           ),
