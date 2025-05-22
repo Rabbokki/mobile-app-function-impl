@@ -8,6 +8,7 @@ import '../../data/reservation/reservation_service.dart';
 import '../../widgets/profile_header_widget.dart';
 import 'trip_detail.dart'; // 내 여행 일정 상세보기
 
+
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
 
@@ -16,13 +17,14 @@ class MyPageScreen extends StatefulWidget {
 }
 
 class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderStateMixin {
+  static const Color travelingPurple = Color(0xFFA78BFA);
+
   late TabController _tabController;
   Map<String, dynamic>? myInfo;
   bool isLoading = true;
 
   List<dynamic> reservations = [];
   bool isLoadingReservations = true;
-
 
   final List<Map<String, String>> dummySavedItems = [
     {'name': '도쿄 스카이트리', 'location': '도쿄, 일본', 'type': '명소', 'savedDate': '2025.04.15'},
@@ -47,6 +49,31 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   List<Map<String, dynamic>> savedTrips = [];
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    _fetchMyInfo();
+    _fetchReservations();
+    _loadTripsFromPrefs();
+
+    // ✅ arguments 처리: 저장된 일정 추가
+    Future.microtask(() {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null && args.containsKey('newTrip')) {
+        final newTrip = args['newTrip'] as Map<String, dynamic>;
+
+        if (!savedTrips.any((trip) =>
+        trip['city'] == newTrip['city'] &&
+            trip['startDate'] == newTrip['startDate'])) {
+          setState(() {
+            savedTrips.add(newTrip);
+          });
+          _saveTripsToPrefs();
+        }
+      }
+    });
+  }
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -54,26 +81,29 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     if (args != null && args.containsKey('newTrip')) {
       final newTrip = args['newTrip'] as Map<String, dynamic>;
 
-      if (!savedTrips.any((trip) =>
-      trip['city'] == newTrip['city'] &&
-          trip['startDate'] == newTrip['startDate'])) {
+      if (!savedTrips.any((trip) => trip['city'] == newTrip['city'] && trip['startDate'] == newTrip['startDate'])) {
         setState(() {
           savedTrips.add(newTrip);
         });
+        _saveTripsToPrefs();
       }
     }
   }
 
+  Future<void> _loadTripsFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> savedList = prefs.getStringList('savedTrips') ?? [];
+    final List<Map<String, dynamic>> loaded = savedList.map((e) => Map<String, dynamic>.from(jsonDecode(e))).toList();
 
+    setState(() {
+      savedTrips = loaded;
+    });
+  }
 
-  static const Color travelingPurple = Color(0xFFA78BFA); // 회원가입 기준 색상
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    _fetchMyInfo();
-    _fetchReservations();  // 항상 최신 예약 목록 가져옴
+  Future<void> _saveTripsToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = savedTrips.map((trip) => jsonEncode(trip)).toList();
+    await prefs.setStringList('savedTrips', encoded);
   }
 
   Future<void> _fetchMyInfo() async {
@@ -88,14 +118,10 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
     final url = Uri.parse('http://10.0.2.2:8080/api/accounts/mypage');
 
-
     try {
       final response = await http.get(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access_Token': accessToken,
-        },
+        headers: {'Content-Type': 'application/json', 'Access_Token': accessToken},
       );
 
       if (response.statusCode == 200) {
@@ -105,9 +131,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
           isLoading = false;
         });
       } else {
-        setState(() {
-          isLoading = false;
-        });
+        setState(() => isLoading = false);
         if (response.statusCode == 401) {
           await prefs.clear();
           if (!mounted) return;
@@ -115,14 +139,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         }
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       debugPrint('Error fetching profile: $e');
     }
   }
 
-  // 예약 목록 불러오기
   Future<void> _fetchReservations() async {
     setState(() => isLoadingReservations = true);
     try {
@@ -137,7 +158,6 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
 
       final reservationService = ReservationService();
       final res = await reservationService.fetchMyReservations(accessToken: accessToken);
-      debugPrint('예약 데이터: $res');
 
       setState(() {
         reservations = res;
@@ -151,15 +171,11 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     }
   }
 
-
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('accessToken');
 
-    if (accessToken == null) {
-      debugPrint('No access token found');
-      return;
-    }
+    if (accessToken == null) return;
 
     final url = Uri.parse('http://10.0.2.2:8080/api/accounts/logout');
 
@@ -170,12 +186,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       );
 
       if (response.statusCode == 200) {
-        debugPrint('Logout successful');
-        await prefs.clear(); // Clear tokens
+        await prefs.clear();
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/login');
-      } else {
-        debugPrint('Logout failed: ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('Error during logout: $e');
@@ -327,6 +340,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                                           startDate: trip['startDate'],
                                           endDate: trip['endDate'],
                                           itinerary: trip['itinerary'],
+                                          hotels: trip['hotels'],
+                                          transportation: trip['transportation'],
                                         ),
                                       ),
                                     );

@@ -73,12 +73,18 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case '/signup':
       builder = (_) => const SignupScreen();
       break;
+
     case '/ai_itinerary':
-      builder = (_) => const AiItineraryScreen();
+      final args = settings.arguments as Map<String, dynamic>;
+      builder = (_) => AiItineraryScreen(city: args['city']);
       break;
+
+
     case '/step1':
-      builder = (_) => const Step1DateSelection();
+      final args = settings.arguments as Map<String, dynamic>;
+      builder = (_) => DateSelectionScreen(city: args['city']);
       break;
+
     case '/step2': {
       final step2Args = settings.arguments as Map<String, dynamic>;
       builder = (_) => Step2AttractionSelection(
