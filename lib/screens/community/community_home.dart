@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;  // Add http package in pubspec.yaml
+import 'package:http/http.dart' as http;
 
 class CommunityHomeScreen extends StatefulWidget {
   const CommunityHomeScreen({super.key});
@@ -34,8 +34,6 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this);
     _tabController.addListener(_handleTabChange);
-
-    // Initially load all posts
     _fetchPosts();
   }
 
@@ -70,7 +68,7 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
       }
 
       final uri = Uri.http(
-        '10.0.2.2:8080', // <-- replace with your backend host (without http/s)
+        '10.0.2.2:8080',
         '/api/posts',
         queryParameters.isEmpty ? null : queryParameters,
       );
@@ -79,6 +77,12 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        // Sort posts by createdAt descending (newest first)
+        data.sort((a, b) {
+          final dateA = DateTime.parse(a['createdAt'] ?? '');
+          final dateB = DateTime.parse(b['createdAt'] ?? '');
+          return dateB.compareTo(dateA); // descending order
+        });
         setState(() {
           posts = data.map((e) => e as Map<String, dynamic>).toList();
         });
@@ -149,21 +153,19 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
                       ),
                       prefixIcon: const Icon(Icons.search),
                     ),
+                    onChanged: (value) {
+                      setState(() {
+                        currentSearch = value;
+                      });
+                      _fetchPosts(); // Live search
+                    },
                     onSubmitted: (_) => _onSearch(),
                   ),
                 ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: _onSearch,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: travelingPurple,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                  child: const Text('검색'),
-                )
               ],
             ),
           ),
+
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -179,21 +181,24 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
                     title: Text(post['title'] ?? ''),
                     subtitle: Text('작성자: ${post['userName'] ?? '익명'}'),
                     onTap: () async {
-                      print('biang');
                       try {
                         final response = await http.get(
                           Uri.parse("http://10.0.2.2:8080/api/posts/find/${post['id']}"),
                         );
 
                         if (response.statusCode == 200) {
-                          final post = json.decode(utf8.decode(response.bodyBytes));
+                          final postDetail = json.decode(utf8.decode(response.bodyBytes));
 
                           if (context.mounted) {
-                            Navigator.pushNamed(
+                            final result = await Navigator.pushNamed(
                               context,
                               '/post_detail',
-                              arguments: post,
+                              arguments: postDetail,
                             );
+
+                            if (result == true) {
+                              _fetchPosts();
+                            }
                           }
                         } else {
                           throw Exception('상태 코드: ${response.statusCode}');
@@ -210,7 +215,7 @@ class _CommunityHomeState extends State<CommunityHomeScreen> with SingleTickerPr
                 );
               },
             ),
-          )
+          ),
         ],
       ),
     );

@@ -38,6 +38,46 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
   }
 
+  Future<void> _deletePost() async {
+    final prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    final refreshToken = prefs.getString('refreshToken');
+    if (accessToken == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
+    }
+
+    final postId = widget.post['id'];
+    final url = Uri.parse('http://10.0.2.2:8080/api/posts/delete/$postId');
+
+    try {
+      final response = await http.delete(url, headers: {
+        'Content-Type': 'application/json',
+        'Access_Token': accessToken,
+        'Refresh': refreshToken ?? '',
+      });
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('게시물이 삭제되었습니다.')),
+          );
+          Navigator.of(context).pop(true); // pop and optionally return true to indicate deletion
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('삭제 실패: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('네트워크 오류가 발생했습니다.')),
+      );
+    }
+  }
+
   Future<void> _fetchLikeStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final accessToken = prefs.getString('accessToken');
@@ -132,12 +172,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  void _navigateToEditPage() {
-    Navigator.pushNamed(
+  void _navigateToEditPage() async {
+    final updatedPost = await Navigator.pushNamed(
       context,
       '/write_post',
       arguments: widget.post,
     );
+
+    if (updatedPost != null && mounted) {
+      setState(() {
+        widget.post.clear();
+        widget.post.addAll(updatedPost as Map<String, dynamic>);
+      });
+      _fetchLikeStatus();
+    }
   }
 
   @override
@@ -288,13 +336,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     tooltip: '수정',
                   ),
                   IconButton(
-                    onPressed: () {
-                      // 삭제 로직
+                    onPressed: _isProcessingLike ? null : () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('게시물 삭제'),
+                          content: const Text('정말로 게시물을 삭제하시겠습니까?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('삭제')),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        await _deletePost();
+                      }
                     },
                     icon: const Icon(Icons.delete),
                     color: Colors.redAccent,
                     tooltip: '삭제',
                   ),
+
                 ] else ...[
                   IconButton(
                     onPressed: _isProcessingLike ? null : () async {
