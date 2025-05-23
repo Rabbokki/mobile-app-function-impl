@@ -8,7 +8,6 @@ import '../../data/reservation/reservation_service.dart';
 import '../../data/saved_places/saved_place_model.dart';
 import '../../widgets/profile_header_widget.dart';
 import 'trip_detail.dart';
-import '../../data/saved_places/saved_place_service.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -54,15 +53,13 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _fetchMyInfo();
     _fetchReservations();
     _loadTripsFromPrefs();
-    _fetchSavedPlaces(); // ✅ 여기서 호출
+    _fetchSavedPlaces();
 
     Future.microtask(() {
       final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null && args.containsKey('newTrip')) {
         final newTrip = args['newTrip'] as Map<String, dynamic>;
-        if (!savedTrips.any((trip) =>
-        trip['city'] == newTrip['city'] &&
-            trip['startDate'] == newTrip['startDate'])) {
+        if (!savedTrips.any((trip) => trip['city'] == newTrip['city'] && trip['startDate'] == newTrip['startDate'])) {
           setState(() {
             savedTrips.add(newTrip);
           });
@@ -72,10 +69,9 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     });
   }
 
-  // ✅ 여기 추가된 부분
   Future<void> _fetchSavedPlaces() async {
     try {
-      final places = await fetchSavedPlaces(); // saved_place_service.dart에서 가져옴
+      final places = await fetchSavedPlaces();
       setState(() {
         _savedPlaces = places;
         _isLoadingSavedPlaces = false;
@@ -87,6 +83,40 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       );
     }
   }
+
+  Future<List<SavedPlace>> fetchSavedPlaces() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken');
+
+    if (token == null) {
+      throw Exception('로그인이 필요합니다.');
+    }
+
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/saved-places'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Access_Token': token,
+      },
+    );
+
+    final decoded = json.decode(utf8.decode(response.bodyBytes));
+
+    if (response.statusCode == 200) {
+      if (decoded['success'] == true && decoded['data'] is List) {
+        return (decoded['data'] as List)
+            .map((item) => SavedPlace.fromJson(item))
+            .toList();
+      } else {
+        return [];
+      }
+    } else {
+      final errorMsg = decoded['error'] ?? '서버 응답 오류';
+      throw Exception('(${response.statusCode}) $errorMsg');
+    }
+  }
+
+
   Future<void> _loadTripsFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String> savedList = prefs.getStringList('savedTrips') ?? [];

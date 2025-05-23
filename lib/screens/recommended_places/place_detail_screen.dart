@@ -72,38 +72,53 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> with TickerProvid
       return;
     }
 
-    final response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/api/saved-places'),
-      headers: {
-        'Access_Token': token,
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'placeId': widget.place.placeId,
-        'name': widget.place.name,
-        'address': detail?['formatted_address'] ?? '',
-        'city': widget.place.city,
-        'category': widget.place.category,
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/api/saved-places'),
+        headers: {
+          'Access_Token': token,
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'placeId': widget.place.placeId,
+          'name': widget.place.name,
+          'address': detail?['formatted_address'] ?? '',
+          'city': widget.place.city,
+          'category': widget.place.category,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      _savedPlaceIds.add(widget.place.placeId);
-      prefs.setStringList('savedPlaceIds', _savedPlaceIds);
-      if (!mounted) return;
+      final body = utf8.decode(response.bodyBytes);
+      print('📥 응답 코드: ${response.statusCode}');
+      print('📥 응답 내용: $body');
+
+      if (response.statusCode == 200) {
+        _savedPlaceIds.add(widget.place.placeId);
+        await prefs.setStringList('savedPlaceIds', _savedPlaceIds);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('📌 저장 완료!')),
+        );
+      } else if (response.statusCode == 409) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미 저장된 장소입니다.')),
+        );
+      } else if (response.statusCode == 500) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('⚠️ 서버 오류 발생: 500')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ 저장 실패: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('📌 저장 완료!')),
-      );
-    } else if (response.statusCode == 409) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이미 저장된 장소입니다.')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ 저장 실패: ${response.statusCode}')),
+        SnackBar(content: Text('오류 발생: $e')),
       );
     }
   }
+
 
   void _launchURL(String url) async {
     final uri = Uri.parse(url);
@@ -191,16 +206,21 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen> with TickerProvid
                 if (detail?['website'] != null && detail!['website'].toString().isNotEmpty)
                   GestureDetector(
                     onTap: () => _launchURL(detail!['website']),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.language),
-                        const SizedBox(width: 8),
-                        Text(
-                          detail!['website'],
-                          style: const TextStyle(color: Colors.blue),
-                        ),
-                      ],
-                    ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.language),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              detail!['website'],
+                              style: const TextStyle(color: Colors.blue),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+
                   ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(

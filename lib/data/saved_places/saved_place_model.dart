@@ -15,11 +15,11 @@ class SavedPlace {
 
   factory SavedPlace.fromJson(Map<String, dynamic> json) {
     return SavedPlace(
-      placeId: json['placeId'],
-      name: json['name'],
-      address: json['address'],
-      city: json['city'],
-      category: json['category'],
+      placeId: json['placeId'] ?? '',
+      name: json['name'] ?? '',
+      address: json['address'] ?? '',
+      city: json['city'] ?? '',
+      category: json['category'] ?? '',
     );
   }
 }
