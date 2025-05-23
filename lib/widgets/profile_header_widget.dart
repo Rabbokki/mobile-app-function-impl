@@ -4,7 +4,7 @@ class ProfileHeaderWidget extends StatefulWidget {
   final String nickname;
   final String email;
   final String? imgUrl;
-  final String level;
+  final String level; // 여전히 영문 레벨 키값을 전달받는다면 여기 바꿔도 됨
   final int levelExp;
 
   const ProfileHeaderWidget({
@@ -25,23 +25,32 @@ class _ProfileHeaderWidgetState extends State<ProfileHeaderWidget> {
   bool _showExpDialog = false;
 
   final Map<String, Map<String, int>> levelInfo = {
-    'BEGINNER': {'min': 0,   'max': 99},
-    'NOVICE':   {'min': 100, 'max': 199},
-    'EXPLORER': {'min': 200, 'max': 299},
-    'ADVENTURER': {'min': 300, 'max': 399},
-    'WORLD_TRAVELER': {'min': 400, 'max': 499},
-    'MASTER':   {'min': 500, 'max': 599},
-    'LEGEND':   {'min': 600, 'max': 9999},
+    'Lv.1 여행 새싹': {'min': 0, 'max': 99},
+    'Lv.2 초보 여행자': {'min': 100, 'max': 199},
+    'Lv.3 탐험가': {'min': 200, 'max': 299},
+    'Lv.4 모험가': {'min': 300, 'max': 399},
+    'Lv.5 세계 여행자': {'min': 400, 'max': 499},
+    'Lv.6 여행 달인': {'min': 500, 'max': 599},
+    '🏆 전설의 여행자': {'min': 600, 'max': 9999},
   };
+
+  String getTravelLevel(int exp) {
+    for (final entry in levelInfo.entries) {
+      final min = entry.value['min']!;
+      final max = entry.value['max']!;
+      if (exp >= min && exp <= max) return entry.key;
+    }
+    return 'Lv.0 미정';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final tier = levelInfo[widget.level] ?? levelInfo['BEGINNER']!;
+    final String travelLevel = getTravelLevel(widget.levelExp);
+    final Map<String, int> tier = levelInfo[travelLevel]!;
     final int minExp = tier['min']!;
     final int maxExp = tier['max']!;
     final int progress = ((widget.levelExp - minExp) / (maxExp - minExp + 1) * 100).clamp(0, 100).toInt();
-    final int displayLvl = (widget.levelExp ~/ 100) + 1;
-    final bool isMax = displayLvl >= 7;
+    final bool isMax = widget.levelExp >= 600;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -77,25 +86,21 @@ class _ProfileHeaderWidgetState extends State<ProfileHeaderWidget> {
                     const SizedBox(height: 4),
                     Text(widget.email, style: TextStyle(color: Colors.grey[700])),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Text('여행 레벨: ${widget.level}', style: TextStyle(color: Colors.grey[600])),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () => setState(() => _showLevelDialog = true),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.amber,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                    GestureDetector(
+                      onTap: () => setState(() => _showLevelDialog = true),
+                      child: Row(
+                        children: [
+                          Flexible(
                             child: Text(
-                              isMax ? '🏆 MAX' : 'Lv.$displayLvl',
-                              style: TextStyle(color: Colors.white),
+                              '여행 레벨: $travelLevel',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 14),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 8),
                     GestureDetector(
@@ -107,6 +112,7 @@ class _ProfileHeaderWidgetState extends State<ProfileHeaderWidget> {
                               value: progress / 100,
                               minHeight: 8,
                               backgroundColor: Colors.grey[300],
+                              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -123,7 +129,7 @@ class _ProfileHeaderWidgetState extends State<ProfileHeaderWidget> {
               ),
               IconButton(
                 icon: Icon(Icons.edit, color: Theme.of(context).primaryColor),
-                onPressed: () => Navigator.pushNamed(context, '/profile-edit'),
+                onPressed: () => Navigator.pushNamed(context, '/edit_profile'),
               ),
             ],
           ),
@@ -143,7 +149,7 @@ class _ProfileHeaderWidgetState extends State<ProfileHeaderWidget> {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Text(
-              'Lv.${e.key.replaceAll('_', ' ')}: ${e.value['min']}~${e.value['max']} exp',
+              '${e.key}: ${e.value['min']}~${e.value['max']} exp',
               style: TextStyle(fontSize: 14),
             ),
           );

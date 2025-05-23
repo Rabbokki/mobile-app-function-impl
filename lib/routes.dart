@@ -23,6 +23,8 @@ import 'package:mobile_app_function_impl/screens/travel_planner/step2_attraction
 import 'package:mobile_app_function_impl/screens/travel_planner/step3_accommodation_selection.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/step4_transportation_selection.dart';
 import 'package:mobile_app_function_impl/screens/travel_planner/step5_itinerary_generation.dart';
+import 'package:mobile_app_function_impl/screens/mypage/profile_edit.dart';
+
 
 import 'data/recommended_places/recommended_place_model.dart';
 
@@ -84,6 +86,11 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       final args = settings.arguments as Map<String, dynamic>;
       builder = (_) => AiItineraryScreen(city: args['city']);
       break;
+
+    case '/edit_profile':
+      builder = (_) => const EditProfileScreen();
+      break;
+
 
 
     case '/step1':

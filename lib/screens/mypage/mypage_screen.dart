@@ -5,9 +5,10 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/reservation/reservation_service.dart';
+import '../../data/saved_places/saved_place_model.dart';
 import '../../widgets/profile_header_widget.dart';
-import 'trip_detail.dart'; // 내 여행 일정 상세보기
-
+import 'trip_detail.dart';
+import '../../data/saved_places/saved_place_service.dart';
 
 class MyPageScreen extends StatefulWidget {
   const MyPageScreen({super.key});
@@ -26,10 +27,8 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
   List<dynamic> reservations = [];
   bool isLoadingReservations = true;
 
-  final List<Map<String, String>> dummySavedItems = [
-    {'name': '도쿄 스카이트리', 'location': '도쿄, 일본', 'type': '명소', 'savedDate': '2025.04.15'},
-    {'name': '이치란 라멘', 'location': '도쿄, 일본', 'type': '맛집', 'savedDate': '2025.04.15'},
-  ];
+  List<SavedPlace> _savedPlaces = [];
+  bool _isLoadingSavedPlaces = true;
 
   final List<Map<String, dynamic>> dummyReviews = [
     {
@@ -55,13 +54,12 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     _fetchMyInfo();
     _fetchReservations();
     _loadTripsFromPrefs();
+    _fetchSavedPlaces(); // ✅ 여기서 호출
 
-    // ✅ arguments 처리: 저장된 일정 추가
     Future.microtask(() {
       final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null && args.containsKey('newTrip')) {
         final newTrip = args['newTrip'] as Map<String, dynamic>;
-
         if (!savedTrips.any((trip) =>
         trip['city'] == newTrip['city'] &&
             trip['startDate'] == newTrip['startDate'])) {
@@ -73,23 +71,22 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       }
     });
   }
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-    if (args != null && args.containsKey('newTrip')) {
-      final newTrip = args['newTrip'] as Map<String, dynamic>;
-
-      if (!savedTrips.any((trip) => trip['city'] == newTrip['city'] && trip['startDate'] == newTrip['startDate'])) {
-        setState(() {
-          savedTrips.add(newTrip);
-        });
-        _saveTripsToPrefs();
-      }
+  // ✅ 여기 추가된 부분
+  Future<void> _fetchSavedPlaces() async {
+    try {
+      final places = await fetchSavedPlaces(); // saved_place_service.dart에서 가져옴
+      setState(() {
+        _savedPlaces = places;
+        _isLoadingSavedPlaces = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingSavedPlaces = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('저장된 장소를 불러오는데 실패했습니다: $e')),
+      );
     }
   }
-
   Future<void> _loadTripsFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String> savedList = prefs.getStringList('savedTrips') ?? [];
@@ -140,7 +137,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
       }
     } catch (e) {
       setState(() => isLoading = false);
-      debugPrint('Error fetching profile: $e');
+      debugPrint('Error fetching profile: \$e');
     }
   }
 
@@ -166,7 +163,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     } catch (e) {
       setState(() => isLoadingReservations = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('예약 목록 불러오기 실패: $e')),
+        SnackBar(content: Text('예약 목록 불러오기 실패: \$e')),
       );
     }
   }
@@ -191,7 +188,7 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         Navigator.pushReplacementNamed(context, '/login');
       }
     } catch (e) {
-      debugPrint('Error during logout: $e');
+      debugPrint('Error during logout: \$e');
     }
   }
 
@@ -235,18 +232,16 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
         children: [
           ProfileHeaderWidget(
             nickname: myInfo!['nickname'],
-            email:    myInfo!['email'],
-            imgUrl:   myInfo!['imgUrl'],
-            level:    myInfo!['level'],
+            email: myInfo!['email'],
+            imgUrl: myInfo!['imgUrl'],
+            level: myInfo!['level'],
             levelExp: myInfo!['levelExp'],
           ),
-
-          // Then the tab pages
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildMyTripsTab(),       // Now without the header inside
+                _buildMyTripsTab(),
                 _buildReservationTab(),
                 _buildSavedTab(),
                 _buildReviewTab(),
@@ -258,121 +253,152 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
+
+
+
   Widget _buildMyTripsTab() {
-    return Column(
-      children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/make_trip'),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, '/make_trip'),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.add_circle_outline, size: 40, color: travelingPurple),
+                  SizedBox(height: 8),
+                  Text('새 여행 만들기'),
+                  Text('새로운 여행 일정을 계획해보세요', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          if (savedTrips.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 80),
+                child: Text(
+                  '저장된 여행이 없습니다.',
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
+                ),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: savedTrips.map((trip) {
+                return SizedBox(
+                  width: MediaQuery.of(context).size.width / 2 - 24,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
                     ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.add_circle_outline, size: 40, color: travelingPurple),
-                          SizedBox(height: 8),
-                          Text('새 여행 만들기'),
-                          Text('새로운 여행 일정을 계획해보세요', style: TextStyle(fontSize: 12)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Stack(
+                        children: [
+                          Image.asset(
+                            trip['image'] ?? 'assets/images/default_city.jpg',
+                            width: double.infinity,
+                            height: 150,
+                            fit: BoxFit.cover,
+                          ),
+                          Container(
+                            height: 150,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.black.withOpacity(0.5), Colors.transparent],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 12,
+                            top: 12,
+                            child: const Icon(Icons.map, color: Colors.white),
+                          ),
+                          Positioned(
+                            left: 12,
+                            bottom: 36,
+                            child: Text(
+                              trip['city'] ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 12,
+                            bottom: 20,
+                            child: Text(
+                              '${trip['startDate']} ~ ${trip['endDate']}',
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                          ),
+                          Positioned(
+                            right: 8,
+                            bottom: 8,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TripDetailScreen(
+                                      city: trip['city'],
+                                      startDate: trip['startDate'],
+                                      endDate: trip['endDate'],
+                                      itinerary: trip['itinerary'],
+                                      hotels: trip['hotels'],
+                                      transportation: trip['transportation'],
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(backgroundColor: travelingPurple),
+                              child: const Text('일정 보기', style: TextStyle(color: Colors.white, fontSize: 12)),
+                            ),
+                          )
                         ],
                       ),
                     ),
                   ),
-                ),
-
-                ...savedTrips.map((trip) => Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 4)],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      children: [
-                        Image.asset(
-                          trip['image'] ?? 'assets/images/default_city.jpg',
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.black.withOpacity(0.5), Colors.transparent],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.map, size: 30, color: Colors.white),
-                              const SizedBox(height: 8),
-                              Text(trip['city'] ?? '',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                              const SizedBox(height: 4),
-                              Text('${trip['startDate']} ~ ${trip['endDate']}',
-                                  style: const TextStyle(fontSize: 12, color: Colors.white70)),
-                              const Spacer(),
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => TripDetailScreen(
-                                          city: trip['city'],
-                                          startDate: trip['startDate'],
-                                          endDate: trip['endDate'],
-                                          itinerary: trip['itinerary'],
-                                          hotels: trip['hotels'],
-                                          transportation: trip['transportation'],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(backgroundColor: travelingPurple),
-                                  child: const Text('일정 보기', style: TextStyle(color: Colors.white)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ))
-
-
-              ],
+                );
+              }).toList(),
             ),
-          ),
-        )
-      ],
+        ],
+      ),
     );
   }
+
 
   Widget _buildReservationTab() {
     if (isLoadingReservations) {
       return const Center(child: CircularProgressIndicator());
     }
     if (reservations.isEmpty) {
-      return const Center(child: Text('예약 내역이 없습니다.'));
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 80),
+          child: Text('예약 내역이 없습니다.', style: TextStyle(fontSize: 16, color: Colors.black54)),
+        ),
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -391,26 +417,37 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                   '좌석: ${(res['selectedSeats'] as List<dynamic>).join(', ')}\n'
                   '총 금액: ₩${NumberFormat('#,###').format(res['totalPrice'])}',
             ),
-
           ),
         );
       },
     );
   }
 
-
   Widget _buildSavedTab() {
+    if (_isLoadingSavedPlaces) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_savedPlaces.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 80),
+          child: Text('저장된 항목이 없습니다.', style: TextStyle(fontSize: 16, color: Colors.black54)),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: dummySavedItems.length,
+      itemCount: _savedPlaces.length,
       itemBuilder: (context, index) {
-        final item = dummySavedItems[index];
+        final place = _savedPlaces[index];
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
           elevation: 1.5,
           child: ListTile(
-            title: Text(item['name'] ?? ''),
-            subtitle: Text('${item['location']} · ${item['type']} · 저장일: ${item['savedDate']}'),
+            title: Text(place.name),
+            subtitle: Text('${place.city} · ${place.category}'),
             trailing: const Text('상세보기', style: TextStyle(color: travelingPurple)),
           ),
         );
@@ -418,7 +455,16 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
     );
   }
 
+
   Widget _buildReviewTab() {
+    if (dummyReviews.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.only(top: 80),
+          child: Text('작성한 리뷰가 없습니다.', style: TextStyle(fontSize: 16, color: Colors.black54)),
+        ),
+      );
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: dummyReviews.length,
@@ -483,13 +529,22 @@ class _MyPageScreenState extends State<MyPageScreen> with SingleTickerProviderSt
                 : null,
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(nickname, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(email),
-              Text(level),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(nickname, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(email),
+                Text(level),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.black),
+            tooltip: '프로필 편집',
+            onPressed: () {
+              Navigator.pushNamed(context, '/edit_profile');
+            },
           ),
         ],
       ),
